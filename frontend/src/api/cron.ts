@@ -4,42 +4,28 @@ export interface CronJob {
   id: string
   name: string
   schedule: string
-  prompt: string
   enabled: boolean
-  last_run?: string
-  last_status?: string
-  next_run?: string
+  last_run?: string | null
+  status?: string | null
 }
 
 export interface CronExecution {
-  id: string
-  job_id: string
-  executed_at: string
-  status: 'success' | 'error'
+  id: number
+  cron_job_id: string
+  status: string
   result?: string
   error_message?: string
+  executed_at: string
 }
 
 export const cronApi = {
   listJobs() {
-    return api.get<any, CronJob[]>('/api/cron/jobs')
+    return api.get<any, CronJob[]>('/api/cron/jobs/list')
   },
-
   runJob(jobId: string) {
-    return api.post<any, { message: string }>(`/api/cron/jobs/${jobId}/run`)
+    return api.post<any, { success: boolean; message: string }>(`/api/cron/jobs/${jobId}/run`)
   },
-
-  pauseJob(jobId: string) {
-    return api.post(`/api/cron/jobs/${jobId}/pause`)
-  },
-
-  resumeJob(jobId: string) {
-    return api.post(`/api/cron/jobs/${jobId}/resume`)
-  },
-
   listExecutions(jobId?: string) {
-    return api.get<any, CronExecution[]>('/api/cron/executions', {
-      params: { job_id: jobId }
-    })
+    return api.get<any, CronExecution[]>('/api/cron/executions', { params: { job_id: jobId } })
   }
 }
