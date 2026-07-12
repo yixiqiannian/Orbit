@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/reading", tags=["阅读规划"])
 def list_books(
     status: Optional[BookStatus] = None,
     page: int = Query(1, ge=1),
-    size: int = Query(20, ge=1, le=100),
+    size: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -141,6 +141,19 @@ async def sync_weread(
             cover = item.get("cover", "")
             finish = item.get("finishReading", 0)
 
+            # 获取阅读进度
+            progress = 0
+            last_read_at = None
+            try:
+                progress_data = await client.get_book_progress(weread_id)
+                book_progress = progress_data.get("book", {})
+                progress = book_progress.get("progress", 0)
+                update_time = book_progress.get("updateTime")
+                if update_time:
+                    last_read_at = datetime.fromtimestamp(update_time)
+            except Exception:
+                pass
+
             # 检查是否已存在
             existing = db.query(Book).filter(
                 Book.user_id == current_user.id,
@@ -152,12 +165,23 @@ async def sync_weread(
                 existing.title = title
                 existing.author = author
                 existing.cover_url = cover
-                if finish and existing.status != BookStatus.FINISHED:
+                existing.progress = progress
+                if last_read_at:
+                    existing.last_read_at = last_read_at
+                # 根据进度判断状态
+                if progress >= 100:
                     existing.status = BookStatus.FINISHED
-                    existing.progress = 100
+                elif progress > 0:
+                    existing.status = BookStatus.READING
             else:
                 # 新增
-                status = BookStatus.FINISHED if finish else BookStatus.WANT_TO_READ
+                if finish or progress >= 100:
+                    status = BookStatus.FINISHED
+                elif progress > 0:
+                    status = BookStatus.READING
+                else:
+                    status = BookStatus.WANT_TO_READ
+
                 book = Book(
                     user_id=current_user.id,
                     weread_id=weread_id,
@@ -165,12 +189,53 @@ async def sync_weread(
                     author=author,
                     cover_url=cover,
                     status=status,
-                    progress=100 if finish else 0,
+                    progress=progress,
+                    last_read_at=last_read_at,
                 )
                 db.add(book)
             synced += 1
 
         db.commit()
         return {"message": f"同步成功，共 {synced} 本书", "count": synced}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"同步失败: {str(e)}")
+
+
+@router.get("/sync/{book_id}")
+async def sync_book_progress(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """同步单本书的阅读进度."""
+    from app.services.weread_client import get_weread_client
+
+    client = get_weread_client()
+    if not client:
+        raise HTTPException(status_code=400, detail="微信读书 API 未配置")
+
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="书籍不存在")
+    if not book.weread_id:
+        raise HTTPException(status_code=400, detail="非微信读书同步的书籍")
+
+    try:
+        progress_data = await client.get_book_progress(book.weread_id)
+        book_progress = progress_data.get("book", {})
+        progress = book_progress.get("progress", 0)
+        update_time = book_progress.get("updateTime")
+
+        book.progress = progress
+        if update_time:
+            book.last_read_at = datetime.fromtimestamp(update_time)
+        if progress >= 100:
+            book.status = BookStatus.FINISHED
+        elif progress > 0:
+            book.status = BookStatus.READING
+
+        db.commit()
+        db.refresh(book)
+        return book
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"同步失败: {str(e)}")

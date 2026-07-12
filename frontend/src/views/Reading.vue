@@ -69,10 +69,22 @@
 
           <div class="book-progress">
             <el-progress :percentage="book.progress || 0" :stroke-width="8" />
+            <span v-if="book.last_read_at" class="last-read">
+              {{ formatDate(book.last_read_at) }}
+            </span>
           </div>
 
           <div class="book-actions">
-            <el-button size="small" @click="updateProgress(book)">更新进度</el-button>
+            <el-button
+              v-if="book.weread_id"
+              size="small"
+              type="success"
+              @click="syncProgress(book)"
+              :loading="syncingId === book.id"
+            >
+              同步进度
+            </el-button>
+            <el-button size="small" @click="updateProgress(book)">手动更新</el-button>
             <el-button type="danger" size="small" text @click="handleDelete(book.id)">删除</el-button>
           </div>
         </div>
@@ -123,26 +135,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { readingApi } from '../api/reading'
+import { readingApi, type Book, type ReadingStats } from '../api/reading'
 import { ElMessage } from 'element-plus'
-
-interface Book {
-  id: number
-  title: string
-  author?: string
-  cover_url?: string
-  status: string
-  progress?: number
-  current_chapter?: number
-  total_chapters?: number
-}
-
-interface ReadingStats {
-  total_books: number
-  reading: number
-  finished: number
-  avg_progress: number
-}
 
 const activeTab = ref('all')
 const books = ref<Book[]>([])
@@ -152,6 +146,7 @@ const loading = ref(false)
 const showProgress = ref(false)
 const showAddDialog = ref(false)
 const currentBook = ref<Book | null>(null)
+const syncingId = ref<number | null>(null)
 const newBook = ref({ title: '', author: '' })
 const progressForm = ref({ current_chapter: 0, total_chapters: 0, progress: 0 })
 
@@ -240,6 +235,22 @@ async function saveProgress() {
   }
 }
 
+async function syncProgress(book: Book) {
+  syncingId.value = book.id
+  try {
+    const updated = await readingApi.syncBookProgress(book.id)
+    book.progress = updated.progress
+    book.status = updated.status
+    book.last_read_at = updated.last_read_at
+    ElMessage.success('进度同步成功')
+    loadStats()
+  } catch (e) {
+    ElMessage.error('同步失败')
+  } finally {
+    syncingId.value = null
+  }
+}
+
 async function handleSync() {
   syncing.value = true
   try {
@@ -252,6 +263,12 @@ async function handleSync() {
   } finally {
     syncing.value = false
   }
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('zh-CN')
 }
 </script>
 
@@ -363,8 +380,15 @@ async function handleSync() {
   margin-bottom: 8px;
 }
 
+.last-read {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
 .book-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 </style>

@@ -35,6 +35,14 @@ class WeReadClient:
         """获取书籍详情."""
         return await self._request("/book/info", bookId=book_id)
 
+    async def get_book_progress(self, book_id: str) -> dict:
+        """获取阅读进度."""
+        return await self._request("/book/getprogress", bookId=book_id)
+
+    async def get_chapter_info(self, book_id: str) -> dict:
+        """获取章节目录."""
+        return await self._request("/book/chapterinfo", bookId=book_id)
+
     async def get_read_data(self, book_id: str) -> dict:
         """获取阅读数据."""
         return await self._request("/book/readdata", bookId=book_id)

@@ -2,12 +2,15 @@ import api from './index'
 
 export interface Book {
   id: number
+  weread_id?: string
   title: string
   author?: string
+  cover_url?: string
   status: 'want_to_read' | 'reading' | 'finished'
   progress: number
-  current_chapter: number
-  total_chapters: number
+  current_chapter?: number
+  total_chapters?: number
+  last_read_at?: string
   created_at: string
   updated_at: string
 }
@@ -22,8 +25,6 @@ export interface ReadingStats {
 export interface BookListResponse {
   items: Book[]
   total: number
-  page: number
-  size: number
 }
 
 export const readingApi = {
@@ -44,5 +45,8 @@ export const readingApi = {
   },
   syncWeread() {
     return api.post('/api/reading/sync')
+  },
+  syncBookProgress(id: number) {
+    return api.get<any, Book>(`/api/reading/sync/${id}`)
   }
 }
