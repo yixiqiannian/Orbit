@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_DEBUG: bool = False
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:5173"
 
     @property
     def database_url(self) -> str:
@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()
