@@ -9,7 +9,7 @@
     <!-- 添加任务 -->
     <el-form :inline="true" style="margin: 20px 0;">
       <el-form-item>
-        <el-input v-model="newTask.title" placeholder="任务标题" @keyup.enter="handleAdd" />
+        <el-input v-model="newTask.title" placeholder="任务标题" @keyup.enter="handleAdd" style="width: 300px;" />
       </el-form-item>
       <el-form-item>
         <el-select v-model="newTask.priority" placeholder="优先级" style="width: 120px;">
@@ -26,36 +26,59 @@
       </el-form-item>
     </el-form>
 
-    <!-- 任务列表 -->
-    <el-table :data="tasks" v-loading="loading" stripe>
-      <el-table-column prop="title" label="标题" min-width="200" />
-      <el-table-column prop="status" label="状态" width="120">
-        <template #default="{ row }">
-          <el-select v-model="row.status" @change="handleStatusChange(row)" style="width: 100px;">
-            <el-option label="待办" value="pending" />
-            <el-option label="进行中" value="in_progress" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已取消" value="cancelled" />
-          </el-select>
-        </template>
-      </el-table-column>
-      <el-table-column prop="priority" label="优先级" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.priority === 2 ? 'danger' : row.priority === 1 ? 'warning' : 'info'">
-            {{ row.priority === 2 ? '紧急' : row.priority === 1 ? '重要' : '普通' }}
+    <!-- 任务卡片列表 -->
+    <div v-loading="loading" class="card-grid">
+      <el-card
+        v-for="task in tasks"
+        :key="task.id"
+        class="task-card"
+        shadow="hover"
+      >
+        <div class="card-header">
+          <el-tag
+            :type="task.priority === 2 ? 'danger' : task.priority === 1 ? 'warning' : 'info'"
+            size="small"
+          >
+            {{ task.priority === 2 ? '紧急' : task.priority === 1 ? '重要' : '普通' }}
           </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="due_date" label="截止日期" width="120" />
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+          <el-dropdown @command="(cmd: string) => handleStatusChange(task, cmd)">
+            <el-tag :type="getStatusType(task.status)" style="cursor: pointer;">
+              {{ getStatusLabel(task.status) }}
+              <el-icon class="el-icon--right"><arrow-down /></el-icon>
+            </el-tag>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="pending">待办</el-dropdown-item>
+                <el-dropdown-item command="in_progress">进行中</el-dropdown-item>
+                <el-dropdown-item command="completed">已完成</el-dropdown-item>
+                <el-dropdown-item command="cancelled">已取消</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+
+        <div class="card-body">
+          <h3 :class="{ 'completed': task.status === 'completed' }">{{ task.title }}</h3>
+          <p v-if="task.description" class="desc">{{ task.description }}</p>
+        </div>
+
+        <div class="card-footer">
+          <span v-if="task.due_date" class="due-date">
+            <el-icon><Calendar /></el-icon>
+            {{ task.due_date }}
+          </span>
+          <span v-else class="due-date">无截止日期</span>
+          <el-button type="danger" size="small" text @click="handleDelete(task.id)">删除</el-button>
+        </div>
+      </el-card>
+
+      <!-- 空状态 -->
+      <el-empty v-if="!loading && tasks.length === 0" description="暂无任务" />
+    </div>
 
     <!-- 分页 -->
     <el-pagination
+      v-if="total > 20"
       v-model:current-page="page"
       :page-size="20"
       :total="total"
@@ -70,6 +93,7 @@
 import { ref, onMounted } from 'vue'
 import { taskApi } from '../api/tasks'
 import { ElMessage } from 'element-plus'
+import { Calendar, ArrowDown } from '@element-plus/icons-vue'
 
 const activeTab = ref('daily')
 const tasks = ref<any[]>([])
@@ -107,9 +131,10 @@ async function handleAdd() {
   }
 }
 
-async function handleStatusChange(task: any) {
+async function handleStatusChange(task: any, status: string) {
   try {
-    await taskApi.update(task.id, { status: task.status })
+    await taskApi.update(task.id, { status })
+    task.status = status
     ElMessage.success('状态更新成功')
   } catch (e) {
     ElMessage.error('更新失败')
@@ -130,10 +155,88 @@ function handleTabClick() {
   page.value = 1
   loadTasks()
 }
+
+function getStatusType(status: string) {
+  const map: Record<string, string> = {
+    pending: 'info',
+    in_progress: 'warning',
+    completed: 'success',
+    cancelled: 'danger'
+  }
+  return map[status] || 'info'
+}
+
+function getStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    pending: '待办',
+    in_progress: '进行中',
+    completed: '已完成',
+    cancelled: '已取消'
+  }
+  return map[status] || status
+}
 </script>
 
 <style scoped>
 .tasks-page {
   padding: 0;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.task-card {
+  transition: transform 0.2s;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-body h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #303133;
+}
+
+.card-body h3.completed {
+  text-decoration: line-through;
+  color: #909399;
+}
+
+.card-body .desc {
+  margin: 0;
+  font-size: 14px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
+}
+
+.due-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #909399;
 }
 </style>
