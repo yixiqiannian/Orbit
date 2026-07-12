@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     HERMES_API_URL: str = "http://localhost:8080"
     HERMES_API_KEY: str = ""
 
+    # WeRead (微信读书)
+    WEREAD_API_KEY: str = ""
+
     # Application
     APP_DEBUG: bool = False
     CORS_ORIGINS: str = "http://localhost:5173"

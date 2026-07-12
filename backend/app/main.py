@@ -10,11 +10,13 @@ from app.api.dashboard import router as dashboard_router
 
 app = FastAPI(title="Orbit API", version="1.0.0")
 
-# CORS
+# CORS - 开发模式允许所有来源
+origins = settings.CORS_ORIGINS.split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS.split(","),
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

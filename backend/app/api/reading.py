@@ -1,3 +1,5 @@
+"""Reading (阅读规划) API endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -6,16 +8,15 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.config import settings
 from app.models.user import User
 from app.models.book import Book, BookStatus
 from app.schemas.reading import (
-    BookCreate, BookUpdate, BookResponse, BookListResponse, ReadingStats,
+    BookCreate, BookUpdate, BookResponse, BookListResponse, ReadingStats
 )
 
 router = APIRouter(prefix="/api/reading", tags=["阅读规划"])
 
-
-# ── 书籍 CRUD ────────────────────────────────────────────────────────────
 
 @router.get("/books", response_model=BookListResponse)
 def list_books(
@@ -25,7 +26,7 @@ def list_books(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """按状态筛选书籍列表，支持分页。"""
+    """获取书籍列表."""
     query = db.query(Book).filter(Book.user_id == current_user.id)
     if status:
         query = query.filter(Book.status == status)
@@ -40,8 +41,8 @@ def create_book(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """添加新书籍到书架。"""
-    book = Book(user_id=current_user.id, **request.model_dump())
+    """添加书籍."""
+    book = Book(user_id=current_user.id, **request.dict())
     db.add(book)
     db.commit()
     db.refresh(book)
@@ -54,10 +55,8 @@ def get_book(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """获取单本书籍详情。"""
-    book = db.query(Book).filter(
-        Book.id == book_id, Book.user_id == current_user.id
-    ).first()
+    """获取书籍详情."""
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
     if not book:
         raise HTTPException(status_code=404, detail="书籍不存在")
     return book
@@ -70,20 +69,14 @@ def update_book(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """更新书籍信息（标题、状态、进度等）。"""
-    book = db.query(Book).filter(
-        Book.id == book_id, Book.user_id == current_user.id
-    ).first()
+    """更新书籍."""
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
     if not book:
         raise HTTPException(status_code=404, detail="书籍不存在")
-
-    for key, value in request.model_dump(exclude_unset=True).items():
+    for key, value in request.dict(exclude_unset=True).items():
         setattr(book, key, value)
-
-    # 首次标记为"在读"时，自动记录 last_read_at
     if request.status == BookStatus.READING and not book.last_read_at:
         book.last_read_at = datetime.utcnow()
-
     db.commit()
     db.refresh(book)
     return book
@@ -95,10 +88,8 @@ def delete_book(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """删除书籍。"""
-    book = db.query(Book).filter(
-        Book.id == book_id, Book.user_id == current_user.id
-    ).first()
+    """删除书籍."""
+    book = db.query(Book).filter(Book.id == book_id, Book.user_id == current_user.id).first()
     if not book:
         raise HTTPException(status_code=404, detail="书籍不存在")
     db.delete(book)
@@ -106,20 +97,17 @@ def delete_book(
     return {"message": "删除成功"}
 
 
-# ── 阅读统计 ─────────────────────────────────────────────────────────────
-
 @router.get("/stats", response_model=ReadingStats)
 def get_reading_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """返回当前用户的阅读统计数据。"""
-    uid = current_user.id
-    total = db.query(Book).filter(Book.user_id == uid).count()
-    want = db.query(Book).filter(Book.user_id == uid, Book.status == BookStatus.WANT_TO_READ).count()
-    reading = db.query(Book).filter(Book.user_id == uid, Book.status == BookStatus.READING).count()
-    finished = db.query(Book).filter(Book.user_id == uid, Book.status == BookStatus.FINISHED).count()
-    avg_progress = db.query(func.avg(Book.progress)).filter(Book.user_id == uid).scalar() or 0
+    """获取阅读统计."""
+    total = db.query(Book).filter(Book.user_id == current_user.id).count()
+    want = db.query(Book).filter(Book.user_id == current_user.id, Book.status == BookStatus.WANT_TO_READ).count()
+    reading = db.query(Book).filter(Book.user_id == current_user.id, Book.status == BookStatus.READING).count()
+    finished = db.query(Book).filter(Book.user_id == current_user.id, Book.status == BookStatus.FINISHED).count()
+    avg_progress = db.query(func.avg(Book.progress)).filter(Book.user_id == current_user.id).scalar() or 0
     return ReadingStats(
         total_books=total,
         want_to_read=want,
@@ -129,10 +117,60 @@ def get_reading_stats(
     )
 
 
-# ── 微信读书同步（预留） ────────────────────────────────────────────────
-
 @router.post("/sync")
-async def sync_weread(current_user: User = Depends(get_current_user)):
-    """同步微信读书书架（预留接口）"""
-    # TODO: 实现微信读书同步逻辑
-    return {"message": "同步功能开发中"}
+async def sync_weread(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """同步微信读书书架."""
+    from app.services.weread_client import get_weread_client
+
+    client = get_weread_client()
+    if not client:
+        raise HTTPException(status_code=400, detail="微信读书 API 未配置，请在 .env 中设置 WEREAD_API_KEY")
+
+    try:
+        shelf_data = await client.get_shelf()
+        books = shelf_data.get("books", [])
+        synced = 0
+
+        for item in books:
+            weread_id = item.get("bookId")
+            title = item.get("title", "")
+            author = item.get("author", "")
+            cover = item.get("cover", "")
+            finish = item.get("finishReading", 0)
+
+            # 检查是否已存在
+            existing = db.query(Book).filter(
+                Book.user_id == current_user.id,
+                Book.weread_id == weread_id
+            ).first()
+
+            if existing:
+                # 更新
+                existing.title = title
+                existing.author = author
+                existing.cover_url = cover
+                if finish and existing.status != BookStatus.FINISHED:
+                    existing.status = BookStatus.FINISHED
+                    existing.progress = 100
+            else:
+                # 新增
+                status = BookStatus.FINISHED if finish else BookStatus.WANT_TO_READ
+                book = Book(
+                    user_id=current_user.id,
+                    weread_id=weread_id,
+                    title=title,
+                    author=author,
+                    cover_url=cover,
+                    status=status,
+                    progress=100 if finish else 0,
+                )
+                db.add(book)
+            synced += 1
+
+        db.commit()
+        return {"message": f"同步成功，共 {synced} 本书", "count": synced}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"同步失败: {str(e)}")
