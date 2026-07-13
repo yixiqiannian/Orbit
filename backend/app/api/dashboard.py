@@ -1,4 +1,4 @@
-"""Dashboard aggregation API – summarizes tasks, cron, and reading data."""
+"""Dashboard aggregation API – summarizes tasks, cron, reading, and email data."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -11,25 +11,18 @@ from app.models.user import User
 from app.models.task import Task, TaskStatus
 from app.models.cron_execution import CronExecution, ExecutionStatus
 from app.models.book import Book, BookStatus
-from app.schemas.dashboard import (
-    DashboardResponse,
-    TaskSummary,
-    CronSummary,
-    ReadingSummary,
-    RecentTask,
-    RecentExecution,
-)
+from app.models.email_account import EmailAccount
+from app.models.email_message import EmailMessage
 
 router = APIRouter(prefix="/api/dashboard", tags=["仪表盘"])
 
 
-@router.get("", response_model=DashboardResponse)
+@router.get("")
 def get_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return aggregated dashboard data: task stats, cron stats, reading stats,
-    plus the 5 most-recent tasks and 5 most-recent cron executions."""
+    """Return aggregated dashboard data."""
     uid = current_user.id
 
     # ── Task statistics ──────────────────────────────────────────────────
@@ -39,6 +32,9 @@ def get_dashboard(
     ).count()
     in_progress_tasks = db.query(Task).filter(
         Task.user_id == uid, Task.status == TaskStatus.IN_PROGRESS
+    ).count()
+    completed_tasks = db.query(Task).filter(
+        Task.user_id == uid, Task.status == TaskStatus.COMPLETED
     ).count()
 
     today = date.today()
@@ -56,21 +52,22 @@ def get_dashboard(
 
     # ── Cron / execution statistics ──────────────────────────────────────
     total_cron = db.query(CronExecution).count()
-    # CronExecution has no "enabled" field; treat all recorded jobs as enabled
-    enabled_cron = total_cron
-
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-    recent_executions_count = db.query(CronExecution).filter(
-        CronExecution.executed_at >= seven_days_ago
-    ).count()
-
     success_count = db.query(CronExecution).filter(
         CronExecution.status == ExecutionStatus.SUCCESS
+    ).count()
+    failed_count = db.query(CronExecution).filter(
+        CronExecution.status == ExecutionStatus.FAILED
+    ).count()
+    running_count = db.query(CronExecution).filter(
+        CronExecution.status == ExecutionStatus.RUNNING
     ).count()
     success_rate = round((success_count / total_cron * 100), 1) if total_cron > 0 else 0.0
 
     # ── Reading statistics ───────────────────────────────────────────────
     total_books = db.query(Book).filter(Book.user_id == uid).count()
+    want_to_read = db.query(Book).filter(
+        Book.user_id == uid, Book.status == BookStatus.WANT_TO_READ
+    ).count()
     reading_books = db.query(Book).filter(
         Book.user_id == uid, Book.status == BookStatus.READING
     ).count()
@@ -82,6 +79,30 @@ def get_dashboard(
     ).scalar() or 0
     avg_progress = round(float(avg_progress), 1)
 
+    # 在读书籍列表
+    reading_books_list = (
+        db.query(Book)
+        .filter(Book.user_id == uid, Book.status == BookStatus.READING)
+        .order_by(Book.last_read_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    # ── Email statistics ─────────────────────────────────────────────────
+    total_accounts = db.query(EmailAccount).filter(EmailAccount.is_active == True).count()
+    unread_count = db.query(EmailMessage).filter(
+        EmailMessage.is_read == False
+    ).count()
+
+    # 未读邮件列表
+    email_unread_list = (
+        db.query(EmailMessage)
+        .filter(EmailMessage.is_read == False)
+        .order_by(EmailMessage.received_at.desc())
+        .limit(5)
+        .all()
+    )
+
     # ── Recent items ─────────────────────────────────────────────────────
     recent_tasks = (
         db.query(Task)
@@ -91,54 +112,62 @@ def get_dashboard(
         .all()
     )
 
-    recent_exec_list = (
-        db.query(CronExecution)
-        .order_by(CronExecution.executed_at.desc())
-        .limit(5)
-        .all()
-    )
-
     # ── Build response ───────────────────────────────────────────────────
-    return DashboardResponse(
-        tasks=TaskSummary(
-            total=total_tasks,
-            pending=pending_tasks,
-            in_progress=in_progress_tasks,
-            completed_today=completed_today,
-            overdue=overdue_tasks,
-        ),
-        cron=CronSummary(
-            total_jobs=total_cron,
-            enabled=enabled_cron,
-            recent_executions=recent_executions_count,
-            success_rate=success_rate,
-        ),
-        reading=ReadingSummary(
-            total_books=total_books,
-            reading=reading_books,
-            finished=finished_books,
-            avg_progress=avg_progress,
-        ),
-        recent_tasks=[
-            RecentTask(
-                id=t.id,
-                title=t.title,
-                type=t.type,
-                status=t.status,
-                priority=t.priority,
-                due_date=str(t.due_date) if t.due_date else None,
-                updated_at=t.updated_at,
-            )
+    return {
+        "tasks": {
+            "total": total_tasks,
+            "pending": pending_tasks,
+            "in_progress": in_progress_tasks,
+            "completed": completed_tasks,
+            "completed_today": completed_today,
+            "overdue": overdue_tasks,
+        },
+        "cron": {
+            "total_jobs": total_cron,
+            "success_count": success_count,
+            "failed_count": failed_count,
+            "running_count": running_count,
+            "success_rate": success_rate,
+        },
+        "reading": {
+            "total_books": total_books,
+            "want_to_read": want_to_read,
+            "reading": reading_books,
+            "finished": finished_books,
+            "avg_progress": avg_progress,
+        },
+        "email": {
+            "total_accounts": total_accounts,
+            "unread_count": unread_count,
+        },
+        "reading_books": [
+            {
+                "id": b.id,
+                "title": b.title,
+                "author": b.author,
+                "progress": b.progress,
+                "cover_url": b.cover_url,
+            }
+            for b in reading_books_list
+        ],
+        "email_unread": [
+            {
+                "id": e.id,
+                "subject": e.subject,
+                "sender": e.sender,
+                "received_at": e.received_at.isoformat() if e.received_at else None,
+            }
+            for e in email_unread_list
+        ],
+        "recent_tasks": [
+            {
+                "id": t.id,
+                "title": t.title,
+                "type": t.type,
+                "status": t.status,
+                "priority": t.priority,
+                "due_date": str(t.due_date) if t.due_date else None,
+            }
             for t in recent_tasks
         ],
-        recent_executions=[
-            RecentExecution(
-                id=e.id,
-                cron_job_id=e.cron_job_id,
-                cron_job_name=e.cron_job_name,
-                status=e.status,
-                executed_at=e.executed_at,
-            )
-            for e in recent_exec_list
-        ],
-    )
+    }

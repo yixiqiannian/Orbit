@@ -35,10 +35,61 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
-          <template #header>📅 今日完成</template>
-          <div class="stat-value">{{ stats.tasks?.completed_today || 0 }}</div>
+          <template #header>📧 邮箱</template>
+          <div class="stat-value">{{ stats.email?.total_accounts || 0 }}</div>
           <div class="stat-label">
-            逾期 {{ stats.tasks?.overdue || 0 }} 项
+            未读 {{ stats.email?.unread_count || 0 }} 封
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 图表区域 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <!-- 任务状态饼图 -->
+      <el-col :span="8">
+        <el-card>
+          <template #header>任务状态分布</template>
+          <div ref="taskChartRef" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+
+      <!-- 阅读进度环形图 -->
+      <el-col :span="8">
+        <el-card>
+          <template #header>阅读进度</template>
+          <div ref="readingChartRef" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+
+      <!-- 定时任务执行状态 -->
+      <el-col :span="8">
+        <el-card>
+          <template #header>定时任务执行状态</template>
+          <div ref="cronChartRef" style="height: 300px;"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 阅读书籍进度 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>在读书籍进度</template>
+          <div class="book-progress-list">
+            <div v-for="book in stats.reading_books" :key="book.id" class="book-progress-item">
+              <div class="book-info">
+                <span class="book-title">{{ book.title }}</span>
+                <span class="book-author">{{ book.author }}</span>
+              </div>
+              <el-progress
+                :percentage="book.progress || 0"
+                :stroke-width="20"
+                :text-inside="true"
+                :status="book.progress >= 100 ? 'success' : ''"
+              />
+            </div>
+            <el-empty v-if="!stats.reading_books?.length" description="暂无在读书籍" />
           </div>
         </el-card>
       </el-col>
@@ -51,9 +102,9 @@
           <template #header>最近任务</template>
           <el-table :data="stats.recent_tasks" stripe>
             <el-table-column prop="title" label="标题" />
-            <el-table-column prop="status" label="状态">
+            <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
+                <el-tag :type="getStatusType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -61,14 +112,13 @@
       </el-col>
       <el-col :span="12">
         <el-card>
-          <template #header>最近执行记录</template>
-          <el-table :data="stats.recent_executions" stripe>
-            <el-table-column prop="cron_job_name" label="任务" />
-            <el-table-column prop="status" label="状态">
+          <template #header>邮箱未读</template>
+          <el-table :data="stats.email_unread" stripe>
+            <el-table-column prop="subject" label="主题" />
+            <el-table-column prop="sender" label="发件人" width="180" />
+            <el-table-column prop="received_at" label="时间" width="150">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'success' ? 'success' : 'danger'">
-                  {{ row.status }}
-                </el-tag>
+                {{ formatDate(row.received_at) }}
               </template>
             </el-table-column>
           </el-table>
@@ -79,16 +129,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { dashboardApi } from '../api/dashboard'
+import * as echarts from 'echarts'
 
 const loading = ref(false)
+const taskChartRef = ref<HTMLElement>()
+const readingChartRef = ref<HTMLElement>()
+const cronChartRef = ref<HTMLElement>()
+
 const stats = reactive<any>({
   tasks: {},
   cron: {},
   reading: {},
+  email: {},
   recent_tasks: [],
-  recent_executions: []
+  recent_executions: [],
+  reading_books: [],
+  email_unread: []
 })
 
 onMounted(async () => {
@@ -96,12 +154,96 @@ onMounted(async () => {
   try {
     const data = await dashboardApi.getStats()
     Object.assign(stats, data)
+    await nextTick()
+    initCharts()
   } catch (e) {
     console.error('Failed to load dashboard stats:', e)
   } finally {
     loading.value = false
   }
 })
+
+function initCharts() {
+  initTaskChart()
+  initReadingChart()
+  initCronChart()
+}
+
+function initTaskChart() {
+  if (!taskChartRef.value) return
+  const chart = echarts.init(taskChartRef.value)
+  const option = {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: '5%', left: 'center' },
+    series: [{
+      name: '任务状态',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      label: { show: false, position: 'center' },
+      emphasis: {
+        label: { show: true, fontSize: 20, fontWeight: 'bold' }
+      },
+      labelLine: { show: false },
+      data: [
+        { value: stats.tasks?.pending || 0, name: '待办', itemStyle: { color: '#909399' } },
+        { value: stats.tasks?.in_progress || 0, name: '进行中', itemStyle: { color: '#E6A23C' } },
+        { value: stats.tasks?.completed || 0, name: '已完成', itemStyle: { color: '#67C23A' } },
+        { value: stats.tasks?.overdue || 0, name: '逾期', itemStyle: { color: '#F56C6C' } }
+      ]
+    }]
+  }
+  chart.setOption(option)
+  window.addEventListener('resize', () => chart.resize())
+}
+
+function initReadingChart() {
+  if (!readingChartRef.value) return
+  const chart = echarts.init(readingChartRef.value)
+  const option = {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: '5%', left: 'center' },
+    series: [{
+      name: '阅读状态',
+      type: 'pie',
+      radius: ['50%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      label: { show: true, position: 'outside', formatter: '{b}: {c}本' },
+      data: [
+        { value: stats.reading?.want_to_read || 0, name: '想读', itemStyle: { color: '#409EFF' } },
+        { value: stats.reading?.reading || 0, name: '在读', itemStyle: { color: '#E6A23C' } },
+        { value: stats.reading?.finished || 0, name: '已读', itemStyle: { color: '#67C23A' } }
+      ]
+    }]
+  }
+  chart.setOption(option)
+  window.addEventListener('resize', () => chart.resize())
+}
+
+function initCronChart() {
+  if (!cronChartRef.value) return
+  const chart = echarts.init(cronChartRef.value)
+  const option = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', data: ['成功', '失败', '运行中'] },
+    yAxis: { type: 'value' },
+    series: [{
+      name: '执行次数',
+      type: 'bar',
+      barWidth: '60%',
+      data: [
+        { value: stats.cron?.success_count || 0, itemStyle: { color: '#67C23A' } },
+        { value: stats.cron?.failed_count || 0, itemStyle: { color: '#F56C6C' } },
+        { value: stats.cron?.running_count || 0, itemStyle: { color: '#409EFF' } }
+      ]
+    }]
+  }
+  chart.setOption(option)
+  window.addEventListener('resize', () => chart.resize())
+}
 
 function getStatusType(status: string) {
   const map: Record<string, string> = {
@@ -111,6 +253,21 @@ function getStatusType(status: string) {
     cancelled: 'danger'
   }
   return map[status] || 'info'
+}
+
+function getStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    pending: '待办',
+    in_progress: '进行中',
+    completed: '已完成',
+    cancelled: '已取消'
+  }
+  return map[status] || status
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleString('zh-CN')
 }
 </script>
 
@@ -134,5 +291,31 @@ function getStatusType(status: string) {
   color: #909399;
   font-size: 14px;
   margin-top: 8px;
+}
+.book-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.book-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.book-info {
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+.book-title {
+  font-weight: 500;
+  color: #303133;
+}
+.book-author {
+  font-size: 12px;
+  color: #909399;
+}
+.book-progress-item .el-progress {
+  flex: 1;
 }
 </style>
