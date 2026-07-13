@@ -109,11 +109,8 @@ async function loadData() {
       navApi.listSites()
     ])
     categories.value = cats
-    allSites.value = sitesRes.items
-
-    // 为每个站点附加分类信息
     const catMap = new Map(cats.map(c => [c.id, c]))
-    allSites.value = sitesRes.items.map(site => ({
+    allSites.value = (Array.isArray(sitesRes) ? sitesRes : []).map(site => ({
       ...site,
       category: catMap.get(site.category_id)
     }))
