@@ -213,7 +213,7 @@ async function loadCategories() {
     }
   } catch (e) {
     console.error('Failed to load categories:', e)
-    ElMessage.error('加载分类失败')
+    ElMessage.error('加载分类失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -229,7 +229,7 @@ async function loadSites(categoryId?: number) {
     sites.value = await navApi.listSites(categoryId)
   } catch (e) {
     console.error('Failed to load sites:', e)
-    ElMessage.error('加载导航失败')
+    ElMessage.error('加载导航失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     sitesLoading.value = false
   }
@@ -261,7 +261,7 @@ async function handleSaveCategory() {
     await loadCategories()
   } catch (e) {
     console.error('Failed to save category:', e)
-    ElMessage.error('保存分类失败')
+    ElMessage.error('保存分类失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     saving.value = false
   }
@@ -359,7 +359,7 @@ async function handleSaveSite() {
     await loadSites(selectedCategoryId.value!)
   } catch (e) {
     console.error('Failed to save site:', e)
-    ElMessage.error('保存导航失败')
+    ElMessage.error('保存导航失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     saving.value = false
   }
@@ -376,7 +376,7 @@ async function handleDeleteSite(site: NavSite) {
   } catch (e: any) {
     if (e !== 'cancel') {
       console.error('Failed to delete site:', e)
-      ElMessage.error('删除导航失败')
+      ElMessage.error('删除导航失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
     }
   }
 }

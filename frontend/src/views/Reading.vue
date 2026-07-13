@@ -162,7 +162,7 @@ async function loadBooks() {
     const res = await readingApi.listBooks({ status })
     books.value = res.items
   } catch (e) {
-    ElMessage.error('加载书籍失败')
+    ElMessage.error('加载书籍失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -186,7 +186,7 @@ async function handleAdd() {
     loadBooks()
     loadStats()
   } catch (e) {
-    ElMessage.error('添加失败')
+    ElMessage.error('添加失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -196,7 +196,7 @@ async function handleStatusChange(book: Book) {
     ElMessage.success('状态更新成功')
     loadStats()
   } catch (e) {
-    ElMessage.error('更新失败')
+    ElMessage.error('更新失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
     loadBooks()
   }
 }
@@ -208,7 +208,7 @@ async function handleDelete(id: number) {
     loadBooks()
     loadStats()
   } catch (e) {
-    ElMessage.error('删除失败')
+    ElMessage.error('删除失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -231,7 +231,7 @@ async function saveProgress() {
     loadBooks()
     loadStats()
   } catch (e) {
-    ElMessage.error('进度更新失败')
+    ElMessage.error('进度更新失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -245,7 +245,7 @@ async function syncProgress(book: Book) {
     ElMessage.success('进度同步成功')
     loadStats()
   } catch (e) {
-    ElMessage.error('同步失败')
+    ElMessage.error('同步失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     syncingId.value = null
   }
@@ -259,7 +259,7 @@ async function handleSync() {
     loadBooks()
     loadStats()
   } catch (error) {
-    ElMessage.error('同步失败')
+    ElMessage.error('同步失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     syncing.value = false
   }

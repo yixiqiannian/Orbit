@@ -318,7 +318,7 @@ async function loadAccounts() {
       }
     }
   } catch {
-    ElMessage.error('加载邮箱账户失败')
+    ElMessage.error('加载邮箱账户失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loadingAccounts.value = false
   }
@@ -340,7 +340,7 @@ async function loadMessages() {
     const res = await emailApi.listMessages(selectedAccount.value.id)
     messages.value = res.items || []
   } catch {
-    ElMessage.error('加载邮件失败')
+    ElMessage.error('加载邮件失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loadingMessages.value = false
   }
@@ -371,7 +371,7 @@ async function toggleStar(msg: EmailMessage) {
     await emailApi.toggleStar(msg.id)
     msg.is_starred = !msg.is_starred
   } catch {
-    ElMessage.error('操作失败')
+    ElMessage.error('操作失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -387,7 +387,7 @@ async function syncEmails() {
     const res = await emailApi.getUnreadCount(selectedAccount.value.id)
     unreadCounts.value[selectedAccount.value.id] = res.unread_count
   } catch {
-    ElMessage.error('同步失败')
+    ElMessage.error('同步失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     syncing.value = false
   }
@@ -412,7 +412,7 @@ async function handleAddAccount() {
     })
     await loadAccounts()
   } catch {
-    ElMessage.error('添加失败')
+    ElMessage.error('添加失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     addingAccount.value = false
   }
@@ -464,7 +464,7 @@ async function handleSend() {
     composeForm.subject = ''
     composeForm.body = ''
   } catch {
-    ElMessage.error('发送失败')
+    ElMessage.error('发送失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     sending.value = false
   }

@@ -111,7 +111,7 @@ async function loadTasks() {
     tasks.value = res.items
     total.value = res.total
   } catch (e) {
-    ElMessage.error('加载任务失败')
+    ElMessage.error('加载任务失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -127,7 +127,7 @@ async function handleAdd() {
     newTask.value.priority = 0
     loadTasks()
   } catch (e) {
-    ElMessage.error('添加失败')
+    ElMessage.error('添加失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -137,7 +137,7 @@ async function handleStatusChange(task: any, status: string) {
     task.status = status
     ElMessage.success('状态更新成功')
   } catch (e) {
-    ElMessage.error('更新失败')
+    ElMessage.error('更新失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
@@ -147,7 +147,7 @@ async function handleDelete(id: number) {
     ElMessage.success('删除成功')
     loadTasks()
   } catch (e) {
-    ElMessage.error('删除失败')
+    ElMessage.error('删除失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 

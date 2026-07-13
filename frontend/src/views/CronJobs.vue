@@ -94,7 +94,7 @@ async function loadJobs() {
   try {
     jobs.value = await cronApi.listJobs()
   } catch (e) {
-    ElMessage.error('加载任务失败')
+    ElMessage.error('加载任务失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -111,7 +111,7 @@ async function runJob(jobId: string) {
     }
     loadJobs()
   } catch (e) {
-    ElMessage.error('执行失败')
+    ElMessage.error('执行失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     runningId.value = null
   }
@@ -122,7 +122,7 @@ async function viewHistory(jobId: string) {
     executions.value = await cronApi.listExecutions(jobId)
     showHistory.value = true
   } catch (e) {
-    ElMessage.error('加载执行记录失败')
+    ElMessage.error('加载执行记录失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 </script>
