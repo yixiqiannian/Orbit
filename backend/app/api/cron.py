@@ -3,7 +3,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 import subprocess
-import re
+import json
+import os
+import sys
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -12,54 +14,68 @@ from app.models.cron_execution import CronExecution, ExecutionStatus
 
 router = APIRouter(prefix="/api/cron", tags=["定时任务"])
 
+# 设置正确的 HERMES_HOME 路径（必须在导入 cron 模块之前）
+# 使用 Windows 格式路径，避免 MSYS2 路径解析问题
+os.environ['HERMES_HOME'] = 'G:\\Hermes'
+
+# 添加 hermes-agent 到 Python 路径
+if 'G:\\Hermes\\hermes-agent' not in sys.path:
+    sys.path.insert(0, 'G:\\Hermes\\hermes-agent')
+
 
 def get_hermes_cron_jobs() -> list[dict]:
     """从 Hermes 获取定时任务列表."""
     try:
-        # 使用 hermes 命令获取任务列表
-        result = subprocess.run(
-            ["hermes", "cron", "list"],
-            capture_output=True,
-            text=True,
-            timeout=15
-        )
+        # 直接读取 jobs.json 文件
+        jobs_file = 'G:/Hermes/cron/jobs.json'
         
-        if result.returncode != 0:
+        if not os.path.exists(jobs_file):
+            # 尝试其他路径
+            alt_paths = [
+                'G:/g/Hermes/cron/jobs.json',
+                'C:/Users/Admin/.hermes/cron/jobs.json',
+            ]
+            for alt_path in alt_paths:
+                if os.path.exists(alt_path):
+                    jobs_file = alt_path
+                    break
+        
+        if not os.path.exists(jobs_file):
+            print(f"Jobs file not found: {jobs_file}")
             return []
         
-        jobs = []
-        lines = result.stdout.strip().split('\n')
+        with open(jobs_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            jobs = data.get('jobs', [])
         
-        for line in lines:
-            # 解析格式: ✓ job_id  status  assignee  name
-            # 或: ● job_id  status  assignee  name
-            # 或: ▶ job_id  status  assignee  name
-            # 或: ◻ job_id  status  assignee  name
+        # 格式化任务数据
+        formatted_jobs = []
+        for job in jobs:
+            schedule = job.get('schedule', {})
+            if isinstance(schedule, dict):
+                schedule_display = schedule.get('display', '')
+            else:
+                schedule_display = str(schedule)
             
-            match = re.match(r'[✓●▶◻⊘]\s+(\w+)\s+(\w+)\s+(\S+)\s+(.+)', line)
-            if match:
-                job_id = match.group(1)
-                status = match.group(2)
-                assignee = match.group(3)
-                name = match.group(4).strip()
-                
-                jobs.append({
-                    "id": job_id,
-                    "name": name,
-                    "schedule": "",  # 需要从其他地方获取
-                    "enabled": status in ["ready", "running"],
-                    "last_run": None,
-                    "status": "ok" if status == "done" else ("running" if status == "running" else None),
-                })
+            formatted_jobs.append({
+                'id': job.get('id', ''),
+                'name': job.get('name', ''),
+                'schedule': schedule_display,
+                'enabled': job.get('enabled', True),
+                'last_run': job.get('last_run_at'),
+                'status': job.get('last_status'),
+            })
         
-        return jobs
+        return formatted_jobs
     except Exception as e:
         print(f"Error getting cron jobs: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
 @router.get("/jobs/list")
-def list_jobs(current_user: User = Depends(get_current_user)):
+def list_jobs_api(current_user: User = Depends(get_current_user)):
     """获取定时任务列表."""
     jobs = get_hermes_cron_jobs()
     return jobs
@@ -86,11 +102,15 @@ async def run_job(
 ):
     """执行定时任务."""
     try:
+        env = os.environ.copy()
+        env['HERMES_HOME'] = 'G:\\Hermes'
+        
         result = subprocess.run(
             ["hermes", "cron", "run", job_id],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
+            env=env
         )
         
         execution = CronExecution(
