@@ -52,10 +52,10 @@ export const emailApi = {
     return api.delete(`/api/email/accounts/${id}`)
   },
   getUnreadCount(accountId: number) {
-    return api.get<any, { count: number }>(`/api/email/accounts/${accountId}/unread`)
+    return api.get<any, { account_id: number; folder: string; unread_count: number }>(`/api/email/accounts/${accountId}/unread`)
   },
   listMessages(accountId: number, folder?: string) {
-    return api.get<any, EmailMessage[]>(`/api/email/accounts/${accountId}/messages`, { params: { folder } })
+    return api.get<any, { total: number; items: EmailMessage[] }>(`/api/email/accounts/${accountId}/messages`, { params: { folder } })
   },
   getMessage(messageId: number) {
     return api.get<any, EmailMessage>(`/api/email/messages/${messageId}`)

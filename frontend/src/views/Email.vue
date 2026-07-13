@@ -312,7 +312,7 @@ async function loadAccounts() {
     for (const account of accounts.value) {
       try {
         const res = await emailApi.getUnreadCount(account.id)
-        unreadCounts.value[account.id] = res.count
+        unreadCounts.value[account.id] = res.unread_count
       } catch {
         // 忽略单个账户的错误
       }
@@ -337,7 +337,8 @@ async function loadMessages() {
   if (!selectedAccount.value) return
   loadingMessages.value = true
   try {
-    messages.value = await emailApi.listMessages(selectedAccount.value.id)
+    const res = await emailApi.listMessages(selectedAccount.value.id)
+    messages.value = res.items || []
   } catch {
     ElMessage.error('加载邮件失败')
   } finally {
@@ -384,7 +385,7 @@ async function syncEmails() {
     await loadMessages()
     // 更新未读数
     const res = await emailApi.getUnreadCount(selectedAccount.value.id)
-    unreadCounts.value[selectedAccount.value.id] = res.count
+    unreadCounts.value[selectedAccount.value.id] = res.unread_count
   } catch {
     ElMessage.error('同步失败')
   } finally {
