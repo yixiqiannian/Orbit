@@ -10,8 +10,15 @@ from app.api.dashboard import router as dashboard_router
 
 app = FastAPI(title="Orbit API", version="1.0.0")
 
-# CORS - 开发模式允许所有来源
-origins = settings.CORS_ORIGINS.split(",")
+# CORS 配置 - 允许 localhost 和 127.0.0.1
+origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
