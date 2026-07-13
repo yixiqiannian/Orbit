@@ -22,6 +22,8 @@ class ImapClient:
         """连接到IMAP服务器"""
         try:
             if self.use_ssl:
+                import socket
+                socket.setdefaulttimeout(60)
                 self.conn = imaplib.IMAP4_SSL(self.server, self.port)
             else:
                 self.conn = imaplib.IMAP4(self.server, self.port)

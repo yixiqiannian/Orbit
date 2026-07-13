@@ -35,10 +35,10 @@
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
-          <template #header>📧 邮箱</template>
-          <div class="stat-value">{{ stats.email?.total_accounts || 0 }}</div>
+          <template #header>🧭 导航</template>
+          <div class="stat-value">{{ navStats.total_sites || 0 }}</div>
           <div class="stat-label">
-            未读 {{ stats.email?.unread_count || 0 }} 封
+            {{ navStats.total_categories || 0 }} 个分类
           </div>
         </el-card>
       </el-col>
@@ -131,6 +131,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { dashboardApi } from '../api/dashboard'
+import { navApi, type NavStats } from '../api/nav'
 import * as echarts from 'echarts'
 
 const loading = ref(false)
@@ -149,11 +150,20 @@ const stats = reactive<any>({
   email_unread: []
 })
 
+const navStats = reactive<NavStats>({
+  total_categories: 0,
+  total_sites: 0
+})
+
 onMounted(async () => {
   loading.value = true
   try {
-    const data = await dashboardApi.getStats()
-    Object.assign(stats, data)
+    const [dashboardData, navData] = await Promise.all([
+      dashboardApi.getStats(),
+      navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 }))
+    ])
+    Object.assign(stats, dashboardData)
+    Object.assign(navStats, navData)
     await nextTick()
     initCharts()
   } catch (e) {

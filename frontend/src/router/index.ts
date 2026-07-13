@@ -8,6 +8,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/portal',
+    name: 'NavPortal',
+    component: () => import('../views/NavPortal.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     component: () => import('../components/Layout.vue'),
     meta: { requiresAuth: true },
@@ -36,6 +42,11 @@ const routes = [
         path: '/email',
         name: 'Email',
         component: () => import('../views/Email.vue')
+      },
+      {
+        path: '/nav',
+        name: 'NavManage',
+        component: () => import('../views/NavManage.vue')
       }
     ]
   }
