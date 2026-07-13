@@ -25,6 +25,11 @@ export interface NavStats {
   total_sites: number
 }
 
+export interface SiteInfo {
+  title: string
+  icon: string
+}
+
 export const navApi = {
   listCategories() {
     return api.get<any, NavCategory[]>('/api/nav/categories')
@@ -39,11 +44,11 @@ export const navApi = {
     return api.delete(`/api/nav/categories/${id}`)
   },
   listSites(categoryId?: number) {
-    return api.get<any, { total: number; items: NavSite[] }>('/api/nav/sites', {
+    return api.get<any, NavSite[]>('/api/nav/sites', {
       params: categoryId ? { category_id: categoryId } : {}
     })
   },
-  createSite(data: { category_id: number; name: string; url: string; icon?: string; description?: string; sort_order?: number }) {
+  createSite(data: { category_id: number; name?: string; url: string; icon?: string; description?: string; sort_order?: number }) {
     return api.post<any, NavSite>('/api/nav/sites', data)
   },
   updateSite(id: number, data: { category_id?: number; name?: string; url?: string; icon?: string; description?: string; sort_order?: number }) {
@@ -51,6 +56,9 @@ export const navApi = {
   },
   deleteSite(id: number) {
     return api.delete(`/api/nav/sites/${id}`)
+  },
+  fetchSiteInfo(url: string) {
+    return api.post<any, SiteInfo>('/api/nav/fetch-info', null, { params: { url } })
   },
   getStats() {
     return api.get<any, NavStats>('/api/nav/stats')

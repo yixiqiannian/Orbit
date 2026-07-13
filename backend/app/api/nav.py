@@ -12,7 +12,7 @@ from app.core.deps import get_current_user
 from app.models import User, NavCategory, NavSite
 from app.schemas.nav import (
     NavCategoryCreate, NavCategoryUpdate, NavCategoryResponse,
-    NavSiteCreate, NavSiteUpdate, NavSiteResponse, NavStats
+    NavSiteCreate, NavSiteUpdate, NavSiteResponse, NavStatsResponse
 )
 
 router = APIRouter(prefix="/api/nav", tags=["导航"])
@@ -172,9 +172,9 @@ async def fetch_info(url: str):
     return info
 
 
-@router.get("/stats", response_model=NavStats)
+@router.get("/stats", response_model=NavStatsResponse)
 def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """获取统计数据."""
     categories = db.query(NavCategory).count()
     sites = db.query(NavSite).count()
-    return NavStats(categories=categories, sites=sites)
+    return NavStatsResponse(total_categories=categories, total_sites=sites)

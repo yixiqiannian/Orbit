@@ -1,6 +1,12 @@
 <template>
   <div class="nav-manage">
-    <h2>🧭 导航管理</h2>
+    <div class="page-header">
+      <h2>🧭 导航管理</h2>
+      <el-button type="primary" @click="openPortal">
+        <el-icon><Link /></el-icon>
+        打开导航页
+      </el-button>
+    </div>
 
     <el-row :gutter="20">
       <!-- 左侧分类列表 -->
@@ -61,7 +67,7 @@
             <el-table-column prop="name" label="名称" min-width="120">
               <template #default="{ row }">
                 <div class="site-name-cell">
-                  <img v-if="row.icon" :src="row.icon" class="site-icon" />
+                  <img v-if="row.icon" :src="row.icon" class="site-icon" @error="(e: any) => e.target.style.display='none'" />
                   <span>{{ row.name }}</span>
                 </div>
               </template>
@@ -69,10 +75,13 @@
             <el-table-column prop="url" label="链接" min-width="200" show-overflow-tooltip />
             <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
             <el-table-column prop="sort_order" label="排序" width="80" align="center" />
-            <el-table-column label="操作" width="140" align="center">
+            <el-table-column label="操作" width="180" align="center">
               <template #default="{ row }">
                 <el-button text size="small" @click="openSiteDialog(row)">
                   <el-icon><Edit /></el-icon>
+                </el-button>
+                <el-button text size="small" type="primary" @click="openSite(row)">
+                  <el-icon><Link /></el-icon>
                 </el-button>
                 <el-button text size="small" type="danger" @click="handleDeleteSite(row)">
                   <el-icon><Delete /></el-icon>
@@ -124,14 +133,23 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="链接" required>
+          <el-input v-model="siteForm.url" placeholder="请输入网址" @blur="fetchSiteInfo">
+            <template #append>
+              <el-button @click="fetchSiteInfo" :loading="fetchingInfo">
+                <el-icon><Refresh /></el-icon>
+              </el-button>
+            </template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="名称" required>
           <el-input v-model="siteForm.name" placeholder="请输入导航名称" />
         </el-form-item>
-        <el-form-item label="链接" required>
-          <el-input v-model="siteForm.url" placeholder="请输入网址" />
-        </el-form-item>
         <el-form-item label="图标">
-          <el-input v-model="siteForm.icon" placeholder="图标URL（可选）" />
+          <el-input v-model="siteForm.icon" placeholder="图标URL（自动识别）" />
+          <div v-if="siteForm.icon" class="icon-preview">
+            <img :src="siteForm.icon" @error="(e: any) => e.target.style.display='none'" />
+          </div>
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="siteForm.description" type="textarea" placeholder="简短描述（可选）" />
@@ -151,7 +169,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Link, Refresh } from '@element-plus/icons-vue'
 import { navApi, type NavCategory, type NavSite } from '../api/nav'
 
 const categories = ref<NavCategory[]>([])
@@ -160,6 +178,7 @@ const selectedCategoryId = ref<number | null>(null)
 const selectedCategory = ref<NavCategory | null>(null)
 const sitesLoading = ref(false)
 const saving = ref(false)
+const fetchingInfo = ref(false)
 
 // 分类对话框
 const categoryDialogVisible = ref(false)
@@ -207,8 +226,7 @@ async function selectCategory(cat: NavCategory) {
 async function loadSites(categoryId?: number) {
   sitesLoading.value = true
   try {
-    const res = await navApi.listSites(categoryId)
-    sites.value = res.items
+    sites.value = await navApi.listSites(categoryId)
   } catch (e) {
     console.error('Failed to load sites:', e)
     ElMessage.error('加载导航失败')
@@ -281,11 +299,34 @@ function openSiteDialog(site?: NavSite) {
   siteDialogVisible.value = true
 }
 
-async function handleSaveSite() {
-  if (!siteForm.name.trim()) {
-    ElMessage.warning('请输入导航名称')
-    return
+async function fetchSiteInfo() {
+  if (!siteForm.url.trim()) return
+  
+  // 确保URL有协议
+  let url = siteForm.url.trim()
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url
+    siteForm.url = url
   }
+  
+  fetchingInfo.value = true
+  try {
+    const info = await navApi.fetchSiteInfo(url)
+    if (info.title && !siteForm.name) {
+      siteForm.name = info.title
+    }
+    if (info.icon) {
+      siteForm.icon = info.icon
+    }
+    ElMessage.success('已识别网站信息')
+  } catch (e) {
+    console.error('Failed to fetch site info:', e)
+  } finally {
+    fetchingInfo.value = false
+  }
+}
+
+async function handleSaveSite() {
   if (!siteForm.url.trim()) {
     ElMessage.warning('请输入网址')
     return
@@ -294,6 +335,17 @@ async function handleSaveSite() {
     ElMessage.warning('请选择分类')
     return
   }
+  
+  // 如果没有名称，使用域名
+  if (!siteForm.name.trim()) {
+    try {
+      const url = new URL(siteForm.url)
+      siteForm.name = url.hostname
+    } catch {
+      siteForm.name = siteForm.url
+    }
+  }
+  
   saving.value = true
   try {
     if (editingSite.value) {
@@ -328,14 +380,28 @@ async function handleDeleteSite(site: NavSite) {
     }
   }
 }
+
+function openSite(site: NavSite) {
+  window.open(site.url, '_blank')
+}
+
+function openPortal() {
+  window.open('/portal', '_blank')
+}
 </script>
 
 <style scoped>
 .nav-manage {
   padding: 20px;
 }
-.nav-manage h2 {
-  margin: 0 0 20px;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.page-header h2 {
+  margin: 0;
   color: #303133;
 }
 .card-header {
@@ -386,6 +452,15 @@ async function handleDeleteSite(site: NavSite) {
 .site-icon {
   width: 20px;
   height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.icon-preview {
+  margin-top: 8px;
+}
+.icon-preview img {
+  width: 32px;
+  height: 32px;
   border-radius: 4px;
   object-fit: contain;
 }
