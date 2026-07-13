@@ -31,6 +31,11 @@ const routes = [
         path: '/reading',
         name: 'Reading',
         component: () => import('../views/Reading.vue')
+      },
+      {
+        path: '/email',
+        name: 'Email',
+        component: () => import('../views/Email.vue')
       }
     ]
   }

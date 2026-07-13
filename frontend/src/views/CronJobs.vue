@@ -28,6 +28,13 @@
           >
             立即执行
           </el-button>
+          <el-button
+            type="info"
+            size="small"
+            @click="viewHistory(job.id)"
+          >
+            查看历史
+          </el-button>
         </div>
 
         <div class="card-body">

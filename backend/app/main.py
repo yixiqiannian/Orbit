@@ -6,6 +6,7 @@ from app.api.cron import router as cron_router
 from app.api.reading import router as reading_router
 from app.api.tasks import router as tasks_router
 from app.api.dashboard import router as dashboard_router
+from app.api.email import router as email_router
 
 app = FastAPI(title="Orbit API", version="1.0.0")
 
@@ -24,6 +25,7 @@ app.include_router(cron_router)
 app.include_router(reading_router)
 app.include_router(tasks_router)
 app.include_router(dashboard_router)
+app.include_router(email_router)
 
 
 @app.get("/health")
