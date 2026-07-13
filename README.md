@@ -5,7 +5,7 @@
 ## ✨ 功能特性
 
 - 📊 **仪表盘** - 汇总展示所有关键信息
-- 📋 **任务管理** - 每日任务 / 工作规划 / 目标管理
+- 📋 **任务管理** - 每日任务 / 工作规划 / 目标管理（卡片布局）
 - ⏰ **定时任务** - 对接 Hermes Cron，页面执行，状态反馈
 - 📚 **阅读规划** - 微信读书同步，书架管理，进度追踪
 - 🔐 **用户认证** - JWT 登录，安全可靠
@@ -19,30 +19,41 @@
 | 后端 | Python FastAPI + SQLAlchemy |
 | 数据库 | MySQL 8.x |
 | 认证 | JWT (JSON Web Token) |
-| 部署 | Docker Compose |
 
 ## 📦 项目结构
 
 ```
 Orbit/
-├── frontend/          # Vue 3 前端
-│   ├── Dockerfile     # 前端构建 + Nginx
-│   └── nginx.conf     # Nginx 配置（SPA + API 代理）
-├── backend/           # FastAPI 后端
-│   ├── Dockerfile     # 后端构建
-│   ├── app/           # 应用代码
-│   └── scripts/       # 初始化脚本
-├── docker-compose.yml # Docker 编排
-├── .env.example       # 环境变量示例
-└── README.md          # 本文件
+├── backend/              # FastAPI 后端
+│   ├── app/
+│   │   ├── api/          # API 接口
+│   │   ├── core/         # 配置、认证、数据库
+│   │   ├── models/       # 数据模型
+│   │   ├── schemas/      # 数据验证
+│   │   └── services/     # 业务逻辑
+│   ├── scripts/          # 初始化脚本
+│   └── requirements.txt
+├── frontend/             # Vue 3 前端
+│   └── src/
+│       ├── api/          # API 封装
+│       ├── views/        # 页面组件
+│       ├── stores/       # 状态管理
+│       └── router/       # 路由配置
+├── .env.example          # 环境变量示例
+├── .gitignore
+├── start.bat             # Windows 一键启动脚本
+└── README.md
 ```
+
+---
 
 ## 🚀 快速开始
 
 ### 前置条件
 
-- Docker & Docker Compose
-- Node.js 18+（仅开发时需要）
+- **Python 3.11+**（推荐 3.11，3.14 可能有兼容问题）
+- **Node.js 18+**
+- **MySQL 8.x**（本地或远程）
 
 ### 1. 克隆项目
 
@@ -51,73 +62,97 @@ git clone git@github.com:yixiqiannian/Orbit.git
 cd Orbit
 ```
 
-### 2. 配置环境变量
+### 2. 创建数据库
 
-```bash
-# 复制环境变量示例文件
-cp .env.example .env
+打开 MySQL 命令行或 Navicat，执行：
 
-# 编辑 .env 文件，填入你的配置
-# 至少需要修改：
-# - DB_PASSWORD（数据库密码）
-# - JWT_SECRET（建议生成随机字符串）
+```sql
+CREATE DATABASE orbit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 3. 启动服务
-
-```bash
-# 构建并启动所有服务（前端 + 后端 + 数据库）
-docker-compose up -d --build
-
-# 查看日志
-docker-compose logs -f
-```
-
-> **说明：** Docker Compose 会自动创建 MySQL 数据库（使用 `.env` 中的 `DB_NAME`）。首次启动后，等待约 30 秒让数据库完成初始化，然后执行初始化脚本：
-
-```bash
-# 进入后端容器执行数据库初始化
-docker exec orbit-backend bash scripts/init.sh
-```
-
-### 4. 访问应用
-
-- 前端：http://localhost:3000
-- 后端 API：http://localhost:8000
-- API 文档：http://localhost:8000/docs
-
-### 5. 默认账户
-
-首次启动时，系统会自动创建默认管理员账户：
-- 用户名：`admin`
-- 密码：`orbit2026`
-
-**请登录后立即修改密码！**
-
----
-
-## 🔧 开发模式
-
-### 后端开发
+### 3. 配置后端
 
 ```bash
 cd backend
 
+# 复制环境变量示例
+cp ../.env.example .env
+
+# 编辑 .env 文件，填入你的配置
+```
+
+**.env 配置说明：**
+
+```env
+# 数据库配置（必填）
+DB_HOST=localhost          # 数据库地址
+DB_PORT=3306               # 数据库端口
+DB_USER=root               # 数据库用户名
+DB_PASSWORD=your_password  # 数据库密码
+DB_NAME=orbit              # 数据库名
+
+# JWT 配置（建议修改）
+JWT_SECRET=your-secret-key-here  # JWT 密钥，建议随机生成
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=1440          # Token 有效期（分钟）
+
+# 微信读书配置（可选）
+WEREAD_API_KEY=wrk-xxxxxx  # 微信读书 API Key
+
+# 应用配置
+APP_DEBUG=false
+CORS_ORIGINS=http://localhost:5173  # 前端地址
+```
+
+### 4. 初始化后端
+
+```bash
 # 创建虚拟环境
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 激活虚拟环境
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
 
 # 安装依赖
 pip install -r requirements.txt
 
-# 启动开发服务器
+# 初始化数据库表
+python scripts/init_db.py
+
+# 创建默认管理员账户
+python scripts/init_admin.py
+```
+
+**预期输出：**
+```
+Database tables created successfully!
+Admin user created: admin / orbit2026
+```
+
+### 5. 启动后端
+
+```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 前端开发
+**预期输出：**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete.
+```
+
+### 6. 配置并启动前端
+
+打开新的终端窗口：
 
 ```bash
 cd frontend
+
+# 创建环境变量文件
+echo VITE_API_BASE_URL=http://localhost:8000 > .env
 
 # 安装依赖
 npm install
@@ -126,59 +161,74 @@ npm install
 npm run dev
 ```
 
----
+**预期输出：**
+```
+VITE v8.x.x  ready in xxx ms
 
-## 🐳 Docker 部署详解
-
-### 服务说明
-
-| 服务 | 容器名 | 端口 | 说明 |
-|------|--------|------|------|
-| frontend | orbit-frontend | 3000 | Vue 3 + Nginx |
-| backend | orbit-backend | 8000 | FastAPI + Uvicorn |
-| db | orbit-db | 3306 | MySQL 8.0 |
-
-### 常用命令
-
-```bash
-# 启动所有服务
-docker-compose up -d
-
-# 停止所有服务
-docker-compose down
-
-# 重建并启动
-docker-compose up -d --build
-
-# 查看容器状态
-docker-compose ps
-
-# 查看某个服务日志
-docker-compose logs -f backend
-
-# 进入后端容器
-docker exec -it orbit-backend bash
-
-# 备份数据库
-docker exec orbit-db mysqldump -u root -p orbit > backup.sql
-
-# 恢复数据库
-docker exec -i orbit-db mysql -u root -p orbit < backup.sql
+➜  Local:   http://localhost:5173/
 ```
 
-### 数据持久化
+### 7. 访问系统
 
-MySQL 数据通过 Docker Volume `mysql-data` 持久化存储。即使容器被删除，数据仍然保留。
+打开浏览器访问 **http://localhost:5173**
 
-如需完全重置：
-```bash
-docker-compose down -v  # 删除容器和数据卷
-docker-compose up -d --build
-```
+**默认登录账户：**
+- 用户名：`admin`
+- 密码：`orbit2026`
+
+⚠️ **请登录后立即修改密码！**
 
 ---
 
-## ⚙️ 配置说明
+## 🪟 Windows 一键启动
+
+双击 `start.bat` 文件即可同时启动前后端。
+
+---
+
+## 📖 功能说明
+
+### 仪表盘
+
+首页汇总展示：
+- 任务统计（待办、进行中、今日完成、逾期）
+- 定时任务状态
+- 阅读统计（总书籍、在读、已读、平均进度）
+- 最近任务和执行记录
+
+### 任务管理
+
+支持三种任务类型：
+- **每日任务** - 每天需要完成的任务
+- **工作规划** - 阶段性工作计划
+- **目标管理** - 长期目标追踪
+
+功能：
+- 卡片布局，直观展示
+- 优先级标记（普通/重要/紧急）
+- 状态切换（待办/进行中/已完成/已取消）
+- 截止日期设置
+
+### 定时任务
+
+对接 Hermes Cron，展示所有定时任务：
+- 调度规则（cron 表达式）
+- 上次执行时间
+- 执行状态（成功/失败）
+- 立即执行功能
+
+### 阅读规划
+
+集成微信读书 API：
+- 书架同步（自动导入微信读书书籍）
+- 阅读进度追踪
+- 状态管理（想读/在读/已读）
+- 单本书进度同步
+- 阅读统计
+
+---
+
+## 🔧 配置详解
 
 ### 数据库配置
 
@@ -190,38 +240,91 @@ docker-compose up -d --build
 | `DB_PASSWORD` | 数据库密码 | - |
 | `DB_NAME` | 数据库名 | `orbit` |
 
-> **Docker Compose 模式下：** `DB_HOST` 应设为 `db`（容器名），`DB_PASSWORD` 和 `DB_NAME` 会自动传递给 MySQL 容器。
+支持远程 MySQL，只需修改 `DB_HOST` 为远程地址。
 
 ### JWT 配置
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `JWT_SECRET` | JWT 密钥 | - |
+| `JWT_SECRET` | JWT 密钥 | `change-this` |
 | `JWT_ALGORITHM` | JWT 算法 | `HS256` |
-| `JWT_EXPIRE_MINUTES` | Token 过期时间（分钟） | `1440` (24小时) |
+| `JWT_EXPIRE_MINUTES` | Token 过期时间 | `1440` |
 
-### Hermes Cron 配置
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `HERMES_API_URL` | Hermes API 地址 | `http://localhost:8080` |
-| `HERMES_API_KEY` | Hermes API 密钥 | - |
+生成随机密钥：
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
 ### 微信读书配置
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `WEREAD_COOKIE` | 微信读书 Cookie | - |
+| 变量 | 说明 |
+|------|------|
+| `WEREAD_API_KEY` | 微信读书 API Key（格式：`wrk-xxxxxx`） |
 
-**获取微信读书 Cookie：**
-1. 浏览器登录 [微信读书网页版](https://weread.qq.com)
-2. 打开开发者工具 (F12) → Network
-3. 刷新页面，找到任意请求
-4. 复制请求头中的 `Cookie` 值
+获取方式：联系微信读书官方申请 API Key。
 
 ---
 
-## 📖 API 文档
+## 🐛 常见问题
+
+### 1. 数据库连接失败
+
+```
+pymysql.err.OperationalError: (1045, "Access denied")
+```
+
+**解决方案：**
+- 检查 `.env` 中的数据库密码是否正确
+- 确认 MySQL 服务已启动
+- 确认用户有权限访问数据库
+
+### 2. Python 版本不兼容
+
+```
+TypeError: ForwardRef._evaluate() missing 1 required keyword-only argument
+```
+
+**解决方案：**
+使用 Python 3.11 或 3.12，不要使用 3.14。
+
+```bash
+# 删除旧的虚拟环境
+rmdir /s /q venv
+
+# 使用 Python 3.11 创建
+C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe -m venv venv
+```
+
+### 3. 前端无法访问
+
+```
+ERR_CONNECTION_REFUSED
+```
+
+**解决方案：**
+- 确认前端已启动（端口 5173）
+- 尝试访问 http://127.0.0.1:5173
+- 检查防火墙设置
+
+### 4. CORS 错误
+
+```
+Access to XMLHttpRequest has been blocked by CORS
+```
+
+**解决方案：**
+确认 `.env` 中 `CORS_ORIGINS` 包含前端地址。
+
+### 5. 微信读书同步失败
+
+**解决方案：**
+- 检查 `WEREAD_API_KEY` 是否正确
+- 确认 API Key 未过期
+- 检查网络连接
+
+---
+
+## 📝 API 文档
 
 启动后端后访问：
 - Swagger UI：http://localhost:8000/docs
@@ -229,62 +332,31 @@ docker-compose up -d --build
 
 ### 主要 API 端点
 
-| 模块 | 端点 | 说明 |
-|------|------|------|
-| 认证 | `POST /api/auth/login` | 用户登录 |
-| 任务 | `GET /api/tasks` | 获取任务列表 |
-| 任务 | `POST /api/tasks` | 创建任务 |
-| 定时任务 | `GET /api/cron/jobs` | 获取定时任务列表 |
-| 定时任务 | `POST /api/cron/jobs/{id}/run` | 执行定时任务 |
-| 阅读 | `GET /api/reading/books` | 获取书架 |
-| 仪表盘 | `GET /api/dashboard/stats` | 获取统计数据 |
+| 模块 | 端点 | 方法 | 说明 |
+|------|------|------|------|
+| 认证 | `/api/auth/login` | POST | 用户登录 |
+| 认证 | `/api/auth/me` | GET | 获取当前用户 |
+| 任务 | `/api/tasks` | GET | 获取任务列表 |
+| 任务 | `/api/tasks` | POST | 创建任务 |
+| 任务 | `/api/tasks/{id}` | PUT | 更新任务 |
+| 任务 | `/api/tasks/{id}` | DELETE | 删除任务 |
+| 定时任务 | `/api/cron/jobs/list` | GET | 获取定时任务列表 |
+| 定时任务 | `/api/cron/jobs/{id}/run` | POST | 执行定时任务 |
+| 阅读 | `/api/reading/books` | GET | 获取书架 |
+| 阅读 | `/api/reading/sync` | POST | 同步微信读书 |
+| 阅读 | `/api/reading/sync/{id}` | GET | 同步单本书进度 |
+| 仪表盘 | `/api/dashboard` | GET | 获取统计数据 |
 
 ---
 
-## 🐛 常见问题
+## 🔄 更新日志
 
-### 数据库连接失败
-
-检查：
-1. MySQL 服务是否启动
-2. `.env` 中的数据库配置是否正确
-3. 用户是否有权限访问数据库
-4. Docker 模式下 `DB_HOST` 是否设为 `db`
-
-### 前端无法访问后端
-
-检查：
-1. 后端服务是否正常运行
-2. `CORS_ORIGINS` 配置是否包含前端地址
-3. 网络是否通畅
-4. Nginx 代理配置是否正确（`frontend/nginx.conf`）
-
-### 微信读书同步失败
-
-检查：
-1. Cookie 是否过期（约 30 天有效期）
-2. 网络是否能访问 weread.qq.com
-3. 查看后端日志获取详细错误信息
-
-### Docker 容器启动失败
-
-```bash
-# 查看所有容器状态
-docker-compose ps
-
-# 查看具体服务日志
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs db
-
-# 重建镜像
-docker-compose build --no-cache
-docker-compose up -d
-```
-
----
-
-## 📝 更新日志
+### v1.1.0 (2026-07-13)
+- ✅ 定时任务页面显示 Hermes 定时任务
+- ✅ 微信读书同步获取阅读进度
+- ✅ 任务和阅读页面改为卡片布局
+- ✅ 修复 CORS 配置问题
+- ✅ 修复 Python 3.14 兼容问题
 
 ### v1.0.0 (2026-07-13)
 - 🎉 初始版本
@@ -293,7 +365,6 @@ docker-compose up -d
 - ✅ 定时任务模块
 - ✅ 阅读规划模块
 - ✅ 仪表盘首页
-- ✅ Docker Compose 一键部署
 
 ---
 
