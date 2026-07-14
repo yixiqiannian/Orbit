@@ -66,7 +66,7 @@
                 </el-tag>
               </span>
             </div>
-            <div class="daily-card-preview">{{ randomCard.content?.slice(0, 200) }}{{ randomCard.content?.length > 200 ? '...' : '' }}</div>
+            <div class="daily-card-preview markdown-body" v-html="renderMarkdown(randomCard.content?.slice(0, 500))"></div>
           </div>
           <el-empty v-else description="暂无知识卡片" :image-size="80">
             <el-button type="primary" size="small" @click="goToKnowledge">去创建</el-button>
@@ -183,6 +183,13 @@ import { navApi, type NavStats } from '../api/nav'
 import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
 import { Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
+function renderMarkdown(text: string) {
+  if (!text) return ''
+  return md.render(text)
+}
 
 const router = useRouter()
 const loading = ref(false)
@@ -407,6 +414,57 @@ function formatDate(dateStr?: string) {
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  margin: 12px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+.markdown-body h1 { font-size: 18px; }
+.markdown-body h2 { font-size: 16px; }
+.markdown-body p {
+  margin: 8px 0;
+}
+.markdown-body code {
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #e6a23c;
+}
+.markdown-body pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.markdown-body pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.markdown-body ul, .markdown-body ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.markdown-body li {
+  margin: 4px 0;
+}
+.markdown-body blockquote {
+  border-left: 4px solid #409eff;
+  padding-left: 12px;
+  margin: 8px 0;
+  color: #909399;
+}
+.markdown-body strong {
+  color: #303133;
+}
+.markdown-body a {
+  color: #409eff;
+  text-decoration: none;
 }
 .knowledge-stats {
   display: flex;
