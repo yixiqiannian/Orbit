@@ -68,7 +68,10 @@
             {{ task.due_date }}
           </span>
           <span v-else class="due-date">无截止日期</span>
-          <el-button type="danger" size="small" text @click="handleDelete(task.id)">删除</el-button>
+          <div class="footer-actions">
+            <el-button type="primary" size="small" text @click="openLogDialog(task)">日志</el-button>
+            <el-button type="danger" size="small" text @click="handleDelete(task.id)">删除</el-button>
+          </div>
         </div>
       </el-card>
 
@@ -86,21 +89,66 @@
       @current-change="loadTasks"
       style="margin-top: 20px; justify-content: center;"
     />
+
+    <!-- 日志详情弹窗 -->
+    <el-dialog
+      v-model="logDialogVisible"
+      :title="`任务日志 - ${selectedTask?.title || ''}`"
+      width="800px"
+      destroy-on-close
+    >
+      <div class="log-dialog-content">
+        <div class="log-dialog-left">
+          <h4>任务信息</h4>
+          <div class="task-info-item">
+            <span class="label">标题：</span>
+            <span>{{ selectedTask?.title }}</span>
+          </div>
+          <div class="task-info-item">
+            <span class="label">状态：</span>
+            <el-tag :type="getStatusType(selectedTask?.status)" size="small">
+              {{ getStatusLabel(selectedTask?.status) }}
+            </el-tag>
+          </div>
+          <div class="task-info-item">
+            <span class="label">优先级：</span>
+            <el-tag
+              :type="selectedTask?.priority === 2 ? 'danger' : selectedTask?.priority === 1 ? 'warning' : 'info'"
+              size="small"
+            >
+              {{ selectedTask?.priority === 2 ? '紧急' : selectedTask?.priority === 1 ? '重要' : '普通' }}
+            </el-tag>
+          </div>
+          <div v-if="selectedTask?.due_date" class="task-info-item">
+            <span class="label">截止日期：</span>
+            <span>{{ selectedTask.due_date }}</span>
+          </div>
+        </div>
+        <div class="log-dialog-right">
+          <TaskLogTimeline v-if="selectedTask" :task-id="selectedTask.id" />
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { taskApi } from '../api/tasks'
+import { taskApi, type Task } from '../api/tasks'
 import { ElMessage } from 'element-plus'
 import { Calendar, ArrowDown } from '@element-plus/icons-vue'
+import TaskLogTimeline from '../components/TaskLogTimeline.vue'
 
 const activeTab = ref('daily')
-const tasks = ref<any[]>([])
+const tasks = ref<Task[]>([])
 const total = ref(0)
 const page = ref(1)
 const loading = ref(false)
 const newTask = ref({ title: '', type: 'daily', priority: 0, due_date: '' })
+
+// 日志弹窗
+const logDialogVisible = ref(false)
+const selectedTask = ref<Task | null>(null)
 
 onMounted(() => loadTasks())
 
@@ -110,7 +158,7 @@ async function loadTasks() {
     const res = await taskApi.list({ type: activeTab.value, page: page.value })
     tasks.value = res.items
     total.value = res.total
-  } catch (e) {
+  } catch (e: any) {
     ElMessage.error('加载任务失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   } finally {
     loading.value = false
@@ -126,17 +174,17 @@ async function handleAdd() {
     newTask.value.due_date = ''
     newTask.value.priority = 0
     loadTasks()
-  } catch (e) {
+  } catch (e: any) {
     ElMessage.error('添加失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
-async function handleStatusChange(task: any, status: string) {
+async function handleStatusChange(task: Task, status: string) {
   try {
     await taskApi.update(task.id, { status })
     task.status = status
     ElMessage.success('状态更新成功')
-  } catch (e) {
+  } catch (e: any) {
     ElMessage.error('更新失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
@@ -146,7 +194,7 @@ async function handleDelete(id: number) {
     await taskApi.delete(id)
     ElMessage.success('删除成功')
     loadTasks()
-  } catch (e) {
+  } catch (e: any) {
     ElMessage.error('删除失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
@@ -156,24 +204,29 @@ function handleTabClick() {
   loadTasks()
 }
 
-function getStatusType(status: string) {
+function openLogDialog(task: Task) {
+  selectedTask.value = task
+  logDialogVisible.value = true
+}
+
+function getStatusType(status?: string) {
   const map: Record<string, string> = {
     pending: 'info',
     in_progress: 'warning',
     completed: 'success',
     cancelled: 'danger'
   }
-  return map[status] || 'info'
+  return map[status || ''] || 'info'
 }
 
-function getStatusLabel(status: string) {
+function getStatusLabel(status?: string) {
   const map: Record<string, string> = {
     pending: '待办',
     in_progress: '进行中',
     completed: '已完成',
     cancelled: '已取消'
   }
-  return map[status] || status
+  return map[status || ''] || status || ''
 }
 </script>
 
@@ -238,5 +291,50 @@ function getStatusLabel(status: string) {
   gap: 4px;
   font-size: 13px;
   color: #909399;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* 日志弹窗布局 */
+.log-dialog-content {
+  display: flex;
+  gap: 20px;
+  min-height: 400px;
+}
+
+.log-dialog-left {
+  width: 200px;
+  flex-shrink: 0;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.log-dialog-left h4 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: #303133;
+}
+
+.task-info-item {
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-info-item .label {
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.log-dialog-right {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 500px;
 }
 </style>

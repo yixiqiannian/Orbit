@@ -8,6 +8,7 @@ from app.models.nav_category import NavCategory
 from app.models.nav_site import NavSite
 from app.models.knowledge_category import KnowledgeCategory
 from app.models.knowledge_card import KnowledgeCard
+from app.models.task_log import TaskLog
 
 __all__ = [
     "User", "Task", "TaskType", "TaskStatus",
@@ -16,4 +17,5 @@ __all__ = [
     "EmailAccount", "EmailMessage",
     "NavCategory", "NavSite",
     "KnowledgeCategory", "KnowledgeCard",
+    "TaskLog",
 ]

@@ -172,6 +172,40 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 最近学习日志 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <div class="card-header-with-action">
+              <span>📝 最近学习日志</span>
+              <el-button text size="small" @click="router.push('/tasks')">查看全部</el-button>
+            </div>
+          </template>
+          <div v-if="stats.recent_logs?.length" class="recent-logs-list">
+            <div
+              v-for="log in stats.recent_logs"
+              :key="log.id"
+              class="recent-log-item"
+              @click="router.push('/tasks')"
+            >
+              <div class="recent-log-header">
+                <el-tag :type="getLogTypeTag(log.log_type)" size="small">
+                  {{ getLogTypeLabel(log.log_type) }}
+                </el-tag>
+                <span class="recent-log-task">{{ log.task_title }}</span>
+                <span class="recent-log-time">{{ formatDate(log.created_at) }}</span>
+              </div>
+              <div class="recent-log-preview">{{ log.content?.slice(0, 100) }}{{ log.content?.length > 100 ? '...' : '' }}</div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无日志" :image-size="60">
+            <el-button type="primary" size="small" @click="router.push('/tasks')">去记录</el-button>
+          </el-empty>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -356,6 +390,26 @@ function formatDate(dateStr?: string) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN')
 }
+
+function getLogTypeTag(type: string): '' | 'success' | 'warning' | 'danger' | 'info' {
+  const map: Record<string, '' | 'success' | 'warning' | 'danger' | 'info'> = {
+    note: 'info',
+    problem: 'danger',
+    knowledge: 'success',
+    progress: 'warning'
+  }
+  return map[type] || 'info'
+}
+
+function getLogTypeLabel(type: string) {
+  const map: Record<string, string> = {
+    note: '笔记',
+    problem: '问题',
+    knowledge: '知识点',
+    progress: '进度'
+  }
+  return map[type] || type
+}
 </script>
 
 <style scoped>
@@ -499,5 +553,44 @@ function formatDate(dateStr?: string) {
 }
 .book-progress-item .el-progress {
   flex: 1;
+}
+.recent-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.recent-log-item {
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.recent-log-item:hover {
+  background: #ecf5ff;
+}
+.recent-log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.recent-log-task {
+  font-weight: 500;
+  color: #303133;
+  font-size: 14px;
+}
+.recent-log-time {
+  margin-left: auto;
+  font-size: 12px;
+  color: #909399;
+}
+.recent-log-preview {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

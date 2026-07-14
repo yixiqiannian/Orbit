@@ -11,6 +11,7 @@ from app.api.dashboard import router as dashboard_router
 from app.api.email import router as email_router
 from app.api.nav import router as nav_router
 from app.api.knowledge import router as knowledge_router
+from app.api.task_logs import router as task_logs_router
 
 app = FastAPI(title="Orbit API", version="1.0.0")
 
@@ -42,6 +43,7 @@ app.include_router(dashboard_router)
 app.include_router(email_router)
 app.include_router(nav_router)
 app.include_router(knowledge_router)
+app.include_router(task_logs_router)
 
 
 @app.get("/health")

@@ -13,6 +13,7 @@ from app.models.cron_execution import CronExecution, ExecutionStatus
 from app.models.book import Book, BookStatus
 from app.models.email_account import EmailAccount
 from app.models.email_message import EmailMessage
+from app.models.task_log import TaskLog
 
 router = APIRouter(prefix="/api/dashboard", tags=["仪表盘"])
 
@@ -112,6 +113,14 @@ def get_dashboard(
         .all()
     )
 
+    # ── Recent task logs ──────────────────────────────────────────────
+    recent_logs = (
+        db.query(TaskLog)
+        .order_by(TaskLog.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
     # ── Build response ───────────────────────────────────────────────────
     return {
         "tasks": {
@@ -169,5 +178,15 @@ def get_dashboard(
                 "due_date": str(t.due_date) if t.due_date else None,
             }
             for t in recent_tasks
+        ],
+        "recent_logs": [
+            {
+                "id": l.id,
+                "task_id": l.task_id,
+                "content": l.content,
+                "log_type": l.log_type,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+            }
+            for l in recent_logs
         ],
     }

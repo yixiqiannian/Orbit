@@ -32,12 +32,22 @@ export interface RecentExecution {
   status: string
 }
 
+export interface RecentLog {
+  id: number
+  task_id: number
+  task_title: string
+  content: string
+  log_type: string
+  created_at: string
+}
+
 export interface DashboardData {
   tasks: TaskStats
   cron: CronStats
   reading: ReadingStats
   recent_tasks: RecentTask[]
   recent_executions: RecentExecution[]
+  recent_logs: RecentLog[]
 }
 
 export const dashboardApi = {
