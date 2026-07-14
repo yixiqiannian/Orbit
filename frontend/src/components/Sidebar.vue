@@ -8,6 +8,7 @@ import {
   Reading,
   Message,
   Location,
+  Notebook,
   Fold,
   Expand
 } from '@element-plus/icons-vue'
@@ -22,7 +23,8 @@ const menuItems = [
   { path: '/cron', name: 'CronJobs', icon: Timer, title: '定时任务' },
   { path: '/reading', name: 'Reading', icon: Reading, title: '阅读规划' },
   { path: '/email', name: 'Email', icon: Message, title: '邮箱' },
-  { path: '/nav', name: 'NavManage', icon: Location, title: '导航管理' }
+  { path: '/nav', name: 'NavManage', icon: Location, title: '导航管理' },
+  { path: '/knowledge', name: 'Knowledge', icon: Notebook, title: '知识卡片' }
 ]
 
 function handleMenuClick(path: string) {

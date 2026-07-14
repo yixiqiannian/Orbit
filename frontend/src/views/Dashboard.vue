@@ -44,6 +44,53 @@
       </el-col>
     </el-row>
 
+    <!-- 每日一记 + 知识统计 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="16">
+        <el-card class="daily-card">
+          <template #header>
+            <div class="card-header-with-action">
+              <span>🧠 每日一记</span>
+              <el-button text size="small" @click="loadRandomCard">
+                <el-icon><Refresh /></el-icon>换一张
+              </el-button>
+            </div>
+          </template>
+          <div v-if="randomCard" class="daily-card-content" @click="goToKnowledge">
+            <div class="daily-card-title">{{ randomCard.title }}</div>
+            <div class="daily-card-meta">
+              <el-tag v-if="randomCard.category_name" size="small" type="info">{{ randomCard.category_name }}</el-tag>
+              <span v-if="randomCard.tags" class="daily-tags">
+                <el-tag v-for="tag in randomCard.tags.split(',')" :key="tag" size="small" type="warning" effect="plain">
+                  {{ tag.trim() }}
+                </el-tag>
+              </span>
+            </div>
+            <div class="daily-card-preview">{{ randomCard.content?.slice(0, 200) }}{{ randomCard.content?.length > 200 ? '...' : '' }}</div>
+          </div>
+          <el-empty v-else description="暂无知识卡片" :image-size="80">
+            <el-button type="primary" size="small" @click="goToKnowledge">去创建</el-button>
+          </el-empty>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card>
+          <template #header>📊 知识统计</template>
+          <div v-if="knowledgeStats" class="knowledge-stats">
+            <div class="stat-item">
+              <div class="stat-value">{{ knowledgeStats.total_cards || 0 }}</div>
+              <div class="stat-label">卡片总数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ knowledgeStats.total_categories || 0 }}</div>
+              <div class="stat-label">分类数量</div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无数据" :image-size="60" />
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 图表区域 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <!-- 任务状态饼图 -->
@@ -130,10 +177,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { dashboardApi } from '../api/dashboard'
 import { navApi, type NavStats } from '../api/nav'
+import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
+import { Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
+const router = useRouter()
 const loading = ref(false)
 const taskChartRef = ref<HTMLElement>()
 const readingChartRef = ref<HTMLElement>()
@@ -155,15 +206,22 @@ const navStats = reactive<NavStats>({
   total_sites: 0
 })
 
+const randomCard = ref<KnowledgeCard | null>(null)
+const knowledgeStats = ref<{ total_categories: number; total_cards: number } | null>(null)
+
 onMounted(async () => {
   loading.value = true
   try {
-    const [dashboardData, navData] = await Promise.all([
+    const [dashboardData, navData, kStats, kCard] = await Promise.all([
       dashboardApi.getStats(),
-      navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 }))
+      navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 })),
+      knowledgeApi.getStats().catch(() => null),
+      knowledgeApi.randomCard().catch(() => null)
     ])
     Object.assign(stats, dashboardData)
     Object.assign(navStats, navData)
+    knowledgeStats.value = kStats
+    randomCard.value = kCard
     await nextTick()
     initCharts()
   } catch (e) {
@@ -172,6 +230,18 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function loadRandomCard() {
+  try {
+    randomCard.value = await knowledgeApi.randomCard()
+  } catch (e) {
+    console.error('Failed to load random card:', e)
+  }
+}
+
+function goToKnowledge() {
+  router.push('/knowledge')
+}
 
 function initCharts() {
   initTaskChart()
@@ -301,6 +371,50 @@ function formatDate(dateStr?: string) {
   color: #909399;
   font-size: 14px;
   margin-top: 8px;
+}
+.card-header-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.daily-card-content {
+  cursor: pointer;
+  padding: 4px 0;
+}
+.daily-card-content:hover {
+  opacity: 0.85;
+}
+.daily-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 10px;
+}
+.daily-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.daily-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.daily-card-preview {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.knowledge-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+}
+.knowledge-stats .stat-item {
+  text-align: center;
 }
 .book-progress-list {
   display: flex;

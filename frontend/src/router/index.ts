@@ -47,6 +47,11 @@ const routes = [
         path: '/nav',
         name: 'NavManage',
         component: () => import('../views/NavManage.vue')
+      },
+      {
+        path: '/knowledge',
+        name: 'Knowledge',
+        component: () => import('../views/Knowledge.vue')
       }
     ]
   }

@@ -6,6 +6,8 @@ from app.models.email_account import EmailAccount
 from app.models.email_message import EmailMessage
 from app.models.nav_category import NavCategory
 from app.models.nav_site import NavSite
+from app.models.knowledge_category import KnowledgeCategory
+from app.models.knowledge_card import KnowledgeCard
 
 __all__ = [
     "User", "Task", "TaskType", "TaskStatus",
@@ -13,4 +15,5 @@ __all__ = [
     "Book", "BookStatus",
     "EmailAccount", "EmailMessage",
     "NavCategory", "NavSite",
+    "KnowledgeCategory", "KnowledgeCard",
 ]
