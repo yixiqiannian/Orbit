@@ -32,6 +32,12 @@ export interface RecentExecution {
   status: string
 }
 
+export interface HeatmapData {
+  start_date: string
+  end_date: string
+  data: Record<string, number>
+}
+
 export interface RecentLog {
   id: number
   task_id: number
@@ -53,5 +59,8 @@ export interface DashboardData {
 export const dashboardApi = {
   getStats() {
     return api.get<any, DashboardData>('/api/dashboard')
+  },
+  getHeatmap(days?: number) {
+    return api.get<any, HeatmapData>('/api/dashboard/heatmap', { params: { days } })
   }
 }

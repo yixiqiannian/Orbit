@@ -91,6 +91,20 @@
       </el-col>
     </el-row>
 
+    <!-- 热力图 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>📅 任务完成热力图</template>
+          <TaskHeatmap
+            :data="heatmapData?.data"
+            :start-date="heatmapData?.start_date"
+            :end-date="heatmapData?.end_date"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 图表区域 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <!-- 任务状态饼图 -->
@@ -212,10 +226,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { dashboardApi } from '../api/dashboard'
+import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { navApi, type NavStats } from '../api/nav'
 import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
 import { Refresh } from '@element-plus/icons-vue'
+import TaskHeatmap from '../components/TaskHeatmap.vue'
 import * as echarts from 'echarts'
 import MarkdownIt from 'markdown-it'
 
@@ -249,20 +264,23 @@ const navStats = reactive<NavStats>({
 
 const randomCard = ref<KnowledgeCard | null>(null)
 const knowledgeStats = ref<{ total_categories: number; total_cards: number } | null>(null)
+const heatmapData = ref<HeatmapData | null>(null)
 
 onMounted(async () => {
   loading.value = true
   try {
-    const [dashboardData, navData, kStats, kCard] = await Promise.all([
+    const [dashboardData, navData, kStats, kCard, heatmap] = await Promise.all([
       dashboardApi.getStats(),
       navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 })),
       knowledgeApi.getStats().catch(() => null),
-      knowledgeApi.randomCard().catch(() => null)
+      knowledgeApi.randomCard().catch(() => null),
+      dashboardApi.getHeatmap(365).catch(() => null)
     ])
     Object.assign(stats, dashboardData)
     Object.assign(navStats, navData)
     knowledgeStats.value = kStats
     randomCard.value = kCard
+    heatmapData.value = heatmap
     await nextTick()
     initCharts()
   } catch (e) {

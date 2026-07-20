@@ -1,8 +1,8 @@
 """Dashboard aggregation API – summarizes tasks, cron, reading, and email data."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, cast, Date
 from datetime import date, datetime, timedelta
 
 from app.core.database import get_db
@@ -189,4 +189,40 @@ def get_dashboard(
             }
             for l in recent_logs
         ],
+    }
+
+
+@router.get("/heatmap")
+def get_heatmap(
+    days: int = Query(365, ge=30, le=730),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取任务完成热力图数据"""
+    uid = current_user.id
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days)
+
+    # 按日期分组统计已完成任务数量（单次查询）
+    results = (
+        db.query(
+            cast(Task.updated_at, Date).label("date"),
+            func.count(Task.id).label("count"),
+        )
+        .filter(
+            Task.user_id == uid,
+            Task.status == TaskStatus.COMPLETED,
+            cast(Task.updated_at, Date) >= start_date,
+            cast(Task.updated_at, Date) <= end_date,
+        )
+        .group_by(cast(Task.updated_at, Date))
+        .all()
+    )
+
+    heatmap = {str(row.date): row.count for row in results}
+
+    return {
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "data": heatmap,
     }

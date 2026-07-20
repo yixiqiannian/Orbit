@@ -1,5 +1,15 @@
 <template>
   <div class="tasks-page">
+    <!-- 热力图 -->
+    <el-card style="margin-bottom: 20px;">
+      <template #header>📅 任务完成热力图</template>
+      <TaskHeatmap
+        :data="heatmapData?.data"
+        :start-date="heatmapData?.start_date"
+        :end-date="heatmapData?.end_date"
+      />
+    </el-card>
+
     <el-tabs v-model="activeTab" @tab-click="handleTabClick">
       <el-tab-pane label="每日任务" name="daily" />
       <el-tab-pane label="工作规划" name="plan" />
@@ -135,9 +145,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { taskApi, type Task } from '../api/tasks'
+import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { ElMessage } from 'element-plus'
 import { Calendar, ArrowDown } from '@element-plus/icons-vue'
 import TaskLogTimeline from '../components/TaskLogTimeline.vue'
+import TaskHeatmap from '../components/TaskHeatmap.vue'
 
 const activeTab = ref('daily')
 const tasks = ref<Task[]>([])
@@ -145,12 +157,24 @@ const total = ref(0)
 const page = ref(1)
 const loading = ref(false)
 const newTask = ref({ title: '', type: 'daily', priority: 0, due_date: '' })
+const heatmapData = ref<HeatmapData | null>(null)
 
 // 日志弹窗
 const logDialogVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
 
-onMounted(() => loadTasks())
+onMounted(() => {
+  loadTasks()
+  loadHeatmap()
+})
+
+async function loadHeatmap() {
+  try {
+    heatmapData.value = await dashboardApi.getHeatmap(365)
+  } catch (e) {
+    console.error('Failed to load heatmap:', e)
+  }
+}
 
 async function loadTasks() {
   loading.value = true

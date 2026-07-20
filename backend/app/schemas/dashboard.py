@@ -60,3 +60,9 @@ class DashboardResponse(BaseModel):
     reading: ReadingSummary
     recent_tasks: list[RecentTask]
     recent_executions: list[RecentExecution]
+
+
+class HeatmapResponse(BaseModel):
+    start_date: str
+    end_date: str
+    data: dict[str, int]
