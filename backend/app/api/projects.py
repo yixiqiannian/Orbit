@@ -15,7 +15,7 @@ from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
 router = APIRouter(prefix="/api/projects", tags=["项目"])
 
 
-@router.get("", response_model=List[ProjectResponse])
+@router.get("/", response_model=List[ProjectResponse])
 def list_projects(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -55,7 +55,7 @@ def list_projects(
     return result
 
 
-@router.post("", response_model=ProjectResponse)
+@router.post("/", response_model=ProjectResponse)
 def create_project(
     request: ProjectCreate,
     db: Session = Depends(get_db),

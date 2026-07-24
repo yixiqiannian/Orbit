@@ -14,7 +14,7 @@ from app.schemas.task_category import TaskCategoryCreate, TaskCategoryResponse
 router = APIRouter(prefix="/api/task-categories", tags=["任务分类"])
 
 
-@router.get("", response_model=List[TaskCategoryResponse])
+@router.get("/", response_model=List[TaskCategoryResponse])
 def list_categories(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -26,7 +26,7 @@ def list_categories(
     return categories
 
 
-@router.post("", response_model=TaskCategoryResponse)
+@router.post("/", response_model=TaskCategoryResponse)
 def create_category(
     request: TaskCategoryCreate,
     db: Session = Depends(get_db),
