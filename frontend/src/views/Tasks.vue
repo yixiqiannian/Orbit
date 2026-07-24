@@ -29,6 +29,11 @@
             :label="cat.name"
             :value="cat.id"
           />
+          <el-option value="add_new">
+            <el-button text type="primary" @click.stop="showAddCategory = true">
+              <el-icon><Plus /></el-icon> 新增分类
+            </el-button>
+          </el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -188,6 +193,25 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 新增分类弹窗 -->
+    <el-dialog v-model="showAddCategory" title="新增分类" width="400px" destroy-on-close>
+      <el-form :model="newCategory" label-width="80px">
+        <el-form-item label="名称">
+          <el-input v-model="newCategory.name" placeholder="请输入分类名称" />
+        </el-form-item>
+        <el-form-item label="图标">
+          <el-input v-model="newCategory.icon" placeholder="如：📚" style="width: 80px;" />
+        </el-form-item>
+        <el-form-item label="颜色">
+          <el-color-picker v-model="newCategory.color" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddCategory = false">取消</el-button>
+        <el-button type="primary" @click="handleAddCategory">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -222,6 +246,14 @@ const heatmapData = ref<HeatmapData | null>(null)
 // 日志弹窗
 const logDialogVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
+
+// 分类弹窗
+const showAddCategory = ref(false)
+const newCategory = ref({
+  name: '',
+  icon: '📚',
+  color: '#409EFF'
+})
 
 // 过期任务排序：过期的置顶
 const sortedTasks = computed(() => {
@@ -357,6 +389,19 @@ async function handleDelete(id: number) {
     loadTasks()
   } catch (e: any) {
     ElMessage.error('删除失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
+  }
+}
+
+async function handleAddCategory() {
+  if (!newCategory.value.name) return ElMessage.warning('请输入分类名称')
+  try {
+    await taskCategoryApi.create(newCategory.value)
+    ElMessage.success('分类创建成功')
+    showAddCategory.value = false
+    newCategory.value = { name: '', icon: '📚', color: '#409EFF' }
+    loadCategories()
+  } catch (e: any) {
+    ElMessage.error('创建失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
   }
 }
 
