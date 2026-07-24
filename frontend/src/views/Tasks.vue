@@ -19,13 +19,34 @@
     <!-- 添加任务 -->
     <el-form :inline="true" style="margin: 20px 0;">
       <el-form-item>
-        <el-input v-model="newTask.title" placeholder="任务标题" @keyup.enter="handleAdd" style="width: 300px;" />
+        <el-input v-model="newTask.title" placeholder="任务标题" @keyup.enter="handleAdd" style="width: 240px;" />
       </el-form-item>
       <el-form-item>
-        <el-select v-model="newTask.priority" placeholder="优先级" style="width: 120px;">
-          <el-option label="普通" :value="0" />
-          <el-option label="重要" :value="1" />
-          <el-option label="紧急" :value="2" />
+        <el-select v-model="newTask.category_id" placeholder="分类" clearable style="width: 120px;">
+          <el-option
+            v-for="cat in categories"
+            :key="cat.id"
+            :label="cat.name"
+            :value="cat.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-select v-model="newTask.project_id" placeholder="项目" clearable style="width: 140px;">
+          <el-option
+            v-for="p in projects"
+            :key="p.id"
+            :label="p.name"
+            :value="p.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-select v-model="newTask.priority" placeholder="优先级" style="width: 100px;">
+          <el-option label="低" value="low" />
+          <el-option label="普通" value="normal" />
+          <el-option label="高" value="high" />
+          <el-option label="紧急" value="urgent" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -39,18 +60,27 @@
     <!-- 任务卡片列表 -->
     <div v-loading="loading" class="card-grid">
       <el-card
-        v-for="task in tasks"
+        v-for="task in sortedTasks"
         :key="task.id"
         class="task-card"
+        :class="getOverdueClass(task)"
         shadow="hover"
       >
         <div class="card-header">
-          <el-tag
-            :type="task.priority === 2 ? 'danger' : task.priority === 1 ? 'warning' : 'info'"
-            size="small"
-          >
-            {{ task.priority === 2 ? '紧急' : task.priority === 1 ? '重要' : '普通' }}
-          </el-tag>
+          <div class="header-left">
+            <el-tag
+              :type="getPriorityType(task.priority)"
+              size="small"
+            >
+              {{ getPriorityLabel(task.priority) }}
+            </el-tag>
+            <el-tag v-if="task.category_name" size="small" effect="plain" type="info">
+              {{ task.category_name }}
+            </el-tag>
+            <el-tag v-if="task.project_name" size="small" effect="plain">
+              {{ task.project_name }}
+            </el-tag>
+          </div>
           <el-dropdown @command="(cmd: string) => handleStatusChange(task, cmd)">
             <el-tag :type="getStatusType(task.status)" style="cursor: pointer;">
               {{ getStatusLabel(task.status) }}
@@ -73,11 +103,25 @@
         </div>
 
         <div class="card-footer">
-          <span v-if="task.due_date" class="due-date">
-            <el-icon><Calendar /></el-icon>
-            {{ task.due_date }}
-          </span>
-          <span v-else class="due-date">无截止日期</span>
+          <div class="due-info">
+            <span v-if="task.due_date" class="due-date">
+              <el-icon><Calendar /></el-icon>
+              {{ task.due_date }}
+            </span>
+            <span v-else class="due-date">无截止日期</span>
+            <el-tag
+              v-if="getOverdueStatus(task) === 'overdue'"
+              type="danger"
+              size="small"
+              effect="dark"
+            >已过期</el-tag>
+            <el-tag
+              v-else-if="getOverdueStatus(task) === 'soon'"
+              type="warning"
+              size="small"
+              effect="dark"
+            >即将过期</el-tag>
+          </div>
           <div class="footer-actions">
             <el-button type="primary" size="small" text @click="openLogDialog(task)">日志</el-button>
             <el-button type="danger" size="small" text @click="handleDelete(task.id)">删除</el-button>
@@ -122,12 +166,17 @@
           </div>
           <div class="task-info-item">
             <span class="label">优先级：</span>
-            <el-tag
-              :type="selectedTask?.priority === 2 ? 'danger' : selectedTask?.priority === 1 ? 'warning' : 'info'"
-              size="small"
-            >
-              {{ selectedTask?.priority === 2 ? '紧急' : selectedTask?.priority === 1 ? '重要' : '普通' }}
+            <el-tag :type="getPriorityType(selectedTask?.priority)" size="small">
+              {{ getPriorityLabel(selectedTask?.priority) }}
             </el-tag>
+          </div>
+          <div v-if="selectedTask?.category_name" class="task-info-item">
+            <span class="label">分类：</span>
+            <span>{{ selectedTask.category_name }}</span>
+          </div>
+          <div v-if="selectedTask?.project_name" class="task-info-item">
+            <span class="label">项目：</span>
+            <span>{{ selectedTask.project_name }}</span>
           </div>
           <div v-if="selectedTask?.due_date" class="task-info-item">
             <span class="label">截止日期：</span>
@@ -143,8 +192,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { taskApi, type Task } from '../api/tasks'
+import { taskCategoryApi, type TaskCategory } from '../api/taskCategory'
+import { projectApi, type Project } from '../api/project'
 import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { ElMessage } from 'element-plus'
 import { Calendar, ArrowDown } from '@element-plus/icons-vue'
@@ -156,23 +207,100 @@ const tasks = ref<Task[]>([])
 const total = ref(0)
 const page = ref(1)
 const loading = ref(false)
-const newTask = ref({ title: '', type: 'daily', priority: 0, due_date: '' })
+const categories = ref<TaskCategory[]>([])
+const projects = ref<Project[]>([])
+const newTask = ref({
+  title: '',
+  type: 'daily',
+  priority: 'normal',
+  due_date: '',
+  category_id: undefined as number | undefined,
+  project_id: undefined as number | undefined
+})
 const heatmapData = ref<HeatmapData | null>(null)
 
 // 日志弹窗
 const logDialogVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
 
+// 过期任务排序：过期的置顶
+const sortedTasks = computed(() => {
+  const list = [...tasks.value]
+  return list.sort((a, b) => {
+    const aOverdue = getOverdueSortKey(a)
+    const bOverdue = getOverdueSortKey(b)
+    if (aOverdue !== bOverdue) return aOverdue - bOverdue
+    return 0
+  })
+})
+
+function getOverdueSortKey(task: Task): number {
+  if (!task.due_date || task.status === 'completed' || task.status === 'cancelled') return 2
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(task.due_date)
+  due.setHours(0, 0, 0, 0)
+  const diff = (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  if (diff < 0) return 0 // overdue - top
+  if (diff <= 3) return 1 // soon
+  return 2 // normal
+}
+
+function getOverdueStatus(task: Task): 'overdue' | 'soon' | 'normal' {
+  if (!task.due_date || task.status === 'completed' || task.status === 'cancelled') return 'normal'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(task.due_date)
+  due.setHours(0, 0, 0, 0)
+  const diff = (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  if (diff < 0) return 'overdue'
+  if (diff <= 3) return 'soon'
+  return 'normal'
+}
+
+function getOverdueClass(task: Task): string {
+  const status = getOverdueStatus(task)
+  if (status === 'overdue') return 'overdue-card'
+  if (status === 'soon') return 'soon-card'
+  return ''
+}
+
 onMounted(() => {
   loadTasks()
   loadHeatmap()
+  loadCategories()
+  loadProjects()
 })
+
+// 切换 tab 时重新加载数据（修复切换 bug）
+function handleTabClick() {
+  page.value = 1
+  tasks.value = []
+  loadTasks()
+}
 
 async function loadHeatmap() {
   try {
     heatmapData.value = await dashboardApi.getHeatmap(365)
   } catch (e) {
     console.error('Failed to load heatmap:', e)
+  }
+}
+
+async function loadCategories() {
+  try {
+    categories.value = await taskCategoryApi.list()
+  } catch (e) {
+    console.error('Failed to load categories:', e)
+  }
+}
+
+async function loadProjects() {
+  try {
+    const res = await projectApi.list()
+    projects.value = res.items || res as any
+  } catch (e) {
+    console.error('Failed to load projects:', e)
   }
 }
 
@@ -192,11 +320,20 @@ async function loadTasks() {
 async function handleAdd() {
   if (!newTask.value.title) return ElMessage.warning('请输入任务标题')
   try {
-    await taskApi.create({ ...newTask.value, type: activeTab.value })
+    await taskApi.create({
+      title: newTask.value.title,
+      type: activeTab.value,
+      priority: newTask.value.priority,
+      due_date: newTask.value.due_date || undefined,
+      category_id: newTask.value.category_id || undefined,
+      project_id: newTask.value.project_id || undefined
+    })
     ElMessage.success('添加成功')
     newTask.value.title = ''
     newTask.value.due_date = ''
-    newTask.value.priority = 0
+    newTask.value.priority = 'normal'
+    newTask.value.category_id = undefined
+    newTask.value.project_id = undefined
     loadTasks()
   } catch (e: any) {
     ElMessage.error('添加失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
@@ -223,11 +360,6 @@ async function handleDelete(id: number) {
   }
 }
 
-function handleTabClick() {
-  page.value = 1
-  loadTasks()
-}
-
 function openLogDialog(task: Task) {
   selectedTask.value = task
   logDialogVisible.value = true
@@ -252,6 +384,26 @@ function getStatusLabel(status?: string) {
   }
   return map[status || ''] || status || ''
 }
+
+function getPriorityType(priority?: string) {
+  const map: Record<string, string> = {
+    low: 'info',
+    normal: '',
+    high: 'warning',
+    urgent: 'danger'
+  }
+  return map[priority || ''] || ''
+}
+
+function getPriorityLabel(priority?: string) {
+  const map: Record<string, string> = {
+    low: '低',
+    normal: '普通',
+    high: '高',
+    urgent: '紧急'
+  }
+  return map[priority || ''] || priority || '普通'
+}
 </script>
 
 <style scoped>
@@ -273,11 +425,29 @@ function getStatusLabel(status?: string) {
   transform: translateY(-2px);
 }
 
+/* 过期任务样式 */
+.overdue-card {
+  background: #fef0f0;
+  border-left: 3px solid #f56c6c;
+}
+
+.soon-card {
+  background: #fdf6ec;
+  border-left: 3px solid #e6a23c;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
+  gap: 8px;
+}
+
+.header-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .card-body h3 {
@@ -307,6 +477,12 @@ function getStatusLabel(status?: string) {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #ebeef5;
+}
+
+.due-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .due-date {

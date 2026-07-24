@@ -56,11 +56,22 @@ export interface DashboardData {
   recent_logs: RecentLog[]
 }
 
+export interface UpcomingTask {
+  id: number
+  title: string
+  due_date: string
+  priority: string
+  status: string
+}
+
 export const dashboardApi = {
   getStats() {
     return api.get<any, DashboardData>('/api/dashboard')
   },
   getHeatmap(days?: number) {
     return api.get<any, HeatmapData>('/api/dashboard/heatmap', { params: { days } })
+  },
+  getUpcomingTasks() {
+    return api.get<any, UpcomingTask[]>('/api/dashboard/upcoming-tasks')
   }
 }

@@ -15,6 +15,8 @@ router = APIRouter(prefix="/api/tasks", tags=["任务管理"])
 def list_tasks(
     type: Optional[TaskType] = None,
     status: Optional[TaskStatus] = None,
+    category_id: Optional[int] = None,
+    project_id: Optional[int] = None,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -25,6 +27,10 @@ def list_tasks(
         query = query.filter(Task.type == type)
     if status:
         query = query.filter(Task.status == status)
+    if category_id is not None:
+        query = query.filter(Task.category_id == category_id)
+    if project_id is not None:
+        query = query.filter(Task.project_id == project_id)
     total = query.count()
     items = (
         query.order_by(Task.created_at.desc())

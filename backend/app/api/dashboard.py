@@ -14,6 +14,7 @@ from app.models.book import Book, BookStatus
 from app.models.email_account import EmailAccount
 from app.models.email_message import EmailMessage
 from app.models.task_log import TaskLog
+from app.models.project import Project
 
 router = APIRouter(prefix="/api/dashboard", tags=["仪表盘"])
 
@@ -50,6 +51,44 @@ def get_dashboard(
         Task.due_date < today,
         Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
     ).count()
+
+    # ── 即将到期任务（3天内） ────────────────────────────────────────────
+    upcoming_deadline = today + timedelta(days=3)
+    upcoming_tasks = (
+        db.query(Task)
+        .filter(
+            Task.user_id == uid,
+            Task.due_date >= today,
+            Task.due_date <= upcoming_deadline,
+            Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
+        )
+        .order_by(Task.due_date)
+        .limit(10)
+        .all()
+    )
+
+    # ── 项目进度统计 ────────────────────────────────────────────────────
+    projects = db.query(Project).filter(Project.status == "active").all()
+    project_progress = []
+    for project in projects:
+        task_count = db.query(Task).filter(Task.project_id == project.id).count()
+        completed_count = (
+            db.query(Task)
+            .filter(
+                Task.project_id == project.id, Task.status == TaskStatus.COMPLETED
+            )
+            .count()
+        )
+        progress = round((completed_count / task_count * 100), 1) if task_count > 0 else 0.0
+        project_progress.append(
+            {
+                "id": project.id,
+                "name": project.name,
+                "task_count": task_count,
+                "completed_count": completed_count,
+                "progress": progress,
+            }
+        )
 
     # ── Cron / execution statistics ──────────────────────────────────────
     total_cron = db.query(CronExecution).count()
@@ -189,6 +228,16 @@ def get_dashboard(
             }
             for l in recent_logs
         ],
+        "upcoming_tasks": [
+            {
+                "id": t.id,
+                "title": t.title,
+                "due_date": str(t.due_date) if t.due_date else None,
+                "status": t.status,
+            }
+            for t in upcoming_tasks
+        ],
+        "project_progress": project_progress,
     }
 
 

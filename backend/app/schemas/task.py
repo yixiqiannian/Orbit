@@ -10,7 +10,9 @@ class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     type: TaskType
-    priority: int = 0
+    priority: str = "normal"
+    category_id: Optional[int] = None
+    project_id: Optional[int] = None
     due_date: Optional[date] = None
     parent_id: Optional[int] = None
 
@@ -19,7 +21,9 @@ class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
-    priority: Optional[int] = None
+    priority: Optional[str] = None
+    category_id: Optional[int] = None
+    project_id: Optional[int] = None
     due_date: Optional[date] = None
 
 
@@ -29,7 +33,9 @@ class TaskResponse(BaseModel):
     description: Optional[str]
     type: TaskType
     status: TaskStatus
-    priority: int
+    priority: str
+    category_id: Optional[int]
+    project_id: Optional[int]
     due_date: Optional[date]
     parent_id: Optional[int]
     created_at: datetime

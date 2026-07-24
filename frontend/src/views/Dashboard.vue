@@ -44,6 +44,53 @@
       </el-col>
     </el-row>
 
+    <!-- 即将过期 + 项目进度 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="12">
+        <el-card>
+          <template #header>⏰ 即将过期任务</template>
+          <div v-if="upcomingTasks.length" class="upcoming-tasks-list">
+            <div
+              v-for="task in upcomingTasks"
+              :key="task.id"
+              class="upcoming-task-item"
+              :class="{ 'is-overdue': isOverdue(task.due_date) }"
+            >
+              <div class="upcoming-task-info">
+                <span class="upcoming-task-title">{{ task.title }}</span>
+                <el-tag v-if="isOverdue(task.due_date)" type="danger" size="small" effect="dark">已过期</el-tag>
+                <el-tag v-else type="warning" size="small" effect="dark">即将过期</el-tag>
+              </div>
+              <div class="upcoming-task-due">
+                <el-icon><Calendar /></el-icon>
+                {{ task.due_date }}
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无即将过期任务" :image-size="60" />
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <template #header>📁 项目进度</template>
+          <div v-if="projectList.length" class="project-progress-list">
+            <div v-for="p in projectList" :key="p.id" class="project-progress-item">
+              <div class="project-progress-header">
+                <span class="project-progress-name">{{ p.name }}</span>
+                <span class="project-progress-count">{{ p.completed_count }}/{{ p.task_count }}</span>
+              </div>
+              <el-progress
+                :percentage="p.task_count > 0 ? Math.round(p.completed_count / p.task_count * 100) : 0"
+                :stroke-width="12"
+                :status="p.task_count > 0 && p.completed_count >= p.task_count ? 'success' : ''"
+              />
+            </div>
+          </div>
+          <el-empty v-else description="暂无活跃项目" :image-size="60" />
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 每日一记 + 知识统计 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="16">
@@ -229,7 +276,8 @@ import { useRouter } from 'vue-router'
 import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { navApi, type NavStats } from '../api/nav'
 import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
-import { Refresh } from '@element-plus/icons-vue'
+import { projectApi, type Project } from '../api/project'
+import { Refresh, Calendar } from '@element-plus/icons-vue'
 import TaskHeatmap from '../components/TaskHeatmap.vue'
 import * as echarts from 'echarts'
 import MarkdownIt from 'markdown-it'
@@ -265,22 +313,37 @@ const navStats = reactive<NavStats>({
 const randomCard = ref<KnowledgeCard | null>(null)
 const knowledgeStats = ref<{ total_categories: number; total_cards: number } | null>(null)
 const heatmapData = ref<HeatmapData | null>(null)
+const upcomingTasks = ref<any[]>([])
+const projectList = ref<Project[]>([])
+
+function isOverdue(dueDate?: string): boolean {
+  if (!dueDate) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate)
+  due.setHours(0, 0, 0, 0)
+  return due.getTime() < today.getTime()
+}
 
 onMounted(async () => {
   loading.value = true
   try {
-    const [dashboardData, navData, kStats, kCard, heatmap] = await Promise.all([
+    const [dashboardData, navData, kStats, kCard, heatmap, upcoming, projs] = await Promise.all([
       dashboardApi.getStats(),
       navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 })),
       knowledgeApi.getStats().catch(() => null),
       knowledgeApi.randomCard().catch(() => null),
-      dashboardApi.getHeatmap(365).catch(() => null)
+      dashboardApi.getHeatmap(365).catch(() => null),
+      dashboardApi.getUpcomingTasks().catch(() => []),
+      projectApi.list({ status: 'active' }).catch(() => ({ items: [] }))
     ])
     Object.assign(stats, dashboardData)
     Object.assign(navStats, navData)
     knowledgeStats.value = kStats
     randomCard.value = kCard
     heatmapData.value = heatmap
+    upcomingTasks.value = upcoming || []
+    projectList.value = (projs as any)?.items || projs || []
     await nextTick()
     initCharts()
   } catch (e) {
@@ -610,5 +673,66 @@ function getLogTypeLabel(type: string) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.upcoming-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.upcoming-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fdf6ec;
+  border-radius: 6px;
+  border-left: 3px solid #e6a23c;
+}
+.upcoming-task-item.is-overdue {
+  background: #fef0f0;
+  border-left-color: #f56c6c;
+}
+.upcoming-task-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.upcoming-task-title {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+.upcoming-task-due {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #909399;
+}
+.project-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.project-progress-item {
+  padding: 0 4px;
+}
+.project-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.project-progress-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+.project-progress-count {
+  font-size: 13px;
+  color: #909399;
 }
 </style>
