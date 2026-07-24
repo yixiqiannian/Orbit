@@ -62,6 +62,20 @@
       </el-form-item>
     </el-form>
 
+    <!-- 筛选 -->
+    <el-form :inline="true" style="margin: 10px 0;">
+      <el-form-item label="分类">
+        <el-select v-model="filterCategory" placeholder="全部" clearable style="width: 120px;" @change="loadTasks">
+          <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="项目">
+        <el-select v-model="filterProject" placeholder="全部" clearable style="width: 140px;" @change="loadTasks">
+          <el-option v-for="p in projects" :key="p.id" :label="p.name" :value="p.id" />
+        </el-select>
+      </el-form-item>
+    </el-form>
+
     <!-- 任务卡片列表 -->
     <div v-loading="loading" class="card-grid">
       <el-card
@@ -243,6 +257,10 @@ const newTask = ref({
 })
 const heatmapData = ref<HeatmapData | null>(null)
 
+// 筛选
+const filterCategory = ref<number | undefined>(undefined)
+const filterProject = ref<number | undefined>(undefined)
+
 // 日志弹窗
 const logDialogVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
@@ -339,7 +357,12 @@ async function loadProjects() {
 async function loadTasks() {
   loading.value = true
   try {
-    const res = await taskApi.list({ type: activeTab.value, page: page.value })
+    const res = await taskApi.list({
+      type: activeTab.value,
+      page: page.value,
+      category_id: filterCategory.value,
+      project_id: filterProject.value
+    })
     tasks.value = res.items
     total.value = res.total
   } catch (e: any) {
