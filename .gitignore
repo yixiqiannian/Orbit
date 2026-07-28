@@ -50,3 +50,8 @@ coverage/
 # Misc
 *.bak
 *.tmp
+
+# Sensitive / Build artifacts
+backend/token.txt
+backend/orbit-backend.tar
+backend/gen_token_tmp.py
