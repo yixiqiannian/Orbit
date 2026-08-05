@@ -14,6 +14,8 @@ export interface Task {
   due_date?: string
   created_at: string
   updated_at?: string
+  archived?: boolean
+  archived_month?: string
 }
 
 export interface TaskListResponse {
@@ -21,8 +23,19 @@ export interface TaskListResponse {
   total: number
 }
 
+export interface TaskQuery {
+  type?: string
+  status?: string
+  page?: number
+  size?: number
+  category_id?: number
+  project_id?: number
+  archived?: boolean
+  archived_month?: string
+}
+
 export const taskApi = {
-  list(params?: { type?: string; status?: string; page?: number; size?: number }) {
+  list(params?: TaskQuery) {
     return api.get<any, TaskListResponse>('/api/tasks', { params })
   },
   create(data: {
@@ -44,5 +57,8 @@ export const taskApi = {
   },
   getToday() {
     return api.get<any, TaskListResponse>('/api/tasks/today')
+  },
+  archive(month?: string) {
+    return api.post('/api/tasks/archive', null, { params: { month } })
   }
 }

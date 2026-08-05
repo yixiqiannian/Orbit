@@ -4,7 +4,7 @@
 
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stat-cards">
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover">
           <template #header>📋 任务</template>
           <div class="stat-value">{{ stats.tasks?.total || 0 }}</div>
@@ -14,7 +14,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover">
           <template #header>⏰ 定时任务</template>
           <div class="stat-value">{{ stats.cron?.total_jobs || 0 }}</div>
@@ -23,7 +23,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover">
           <template #header>📚 阅读</template>
           <div class="stat-value">{{ stats.reading?.total_books || 0 }}</div>
@@ -33,12 +33,30 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover">
           <template #header>🧭 导航</template>
           <div class="stat-value">{{ navStats.total_sites || 0 }}</div>
           <div class="stat-label">
             {{ navStats.total_categories || 0 }} 个分类
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card shadow="hover">
+          <template #header>📦 上月归档</template>
+          <div class="stat-value">{{ stats.archive?.last_month_archived || 0 }}</div>
+          <div class="stat-label">
+            总归档 {{ stats.archive?.total_archived || 0 }}
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card shadow="hover">
+          <template #header>✅ 本月已完成</template>
+          <div class="stat-value">{{ stats.archive?.this_month_completed || 0 }}</div>
+          <div class="stat-label">
+            待归档
           </div>
         </el-card>
       </el-col>

@@ -54,6 +54,13 @@ export interface DashboardData {
   recent_tasks: RecentTask[]
   recent_executions: RecentExecution[]
   recent_logs: RecentLog[]
+  archive: ArchiveStats
+}
+
+export interface ArchiveStats {
+  last_month_archived: number
+  this_month_completed: number
+  total_archived: number
 }
 
 export interface UpcomingTask {

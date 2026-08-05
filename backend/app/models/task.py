@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -42,6 +42,8 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("tasks.id"))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    archived = Column(Boolean, default=False, nullable=False)  # 是否归档
+    archived_month = Column(String(7), nullable=True)  # 归档月份，如 2026-07
 
     user = relationship("User", backref="tasks")
     children = relationship("Task", backref="parent", remote_side=[id])

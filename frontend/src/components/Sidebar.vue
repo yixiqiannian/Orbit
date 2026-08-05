@@ -12,7 +12,8 @@ import {
   Folder,
   Fold,
   Expand,
-  Calendar
+  Calendar,
+  Box
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -28,7 +29,8 @@ const menuItems = [
   { path: '/email', name: 'Email', icon: Message, title: '邮箱' },
   { path: '/nav', name: 'NavManage', icon: Location, title: '导航管理' },
   { path: '/knowledge', name: 'Knowledge', icon: Notebook, title: '知识卡片' },
-  { path: '/daily-logs', name: 'DailyLogs', icon: Calendar, title: '每日日志' }
+  { path: '/daily-logs', name: 'DailyLogs', icon: Calendar, title: '每日日志' },
+  { path: '/archives', name: 'Archives', icon: Box, title: '任务归档' }
 ]
 
 function handleMenuClick(path: string) {

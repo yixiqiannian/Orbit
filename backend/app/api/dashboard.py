@@ -29,21 +29,22 @@ def get_dashboard(
     uid = current_user.id
 
     # ── Task statistics ──────────────────────────────────────────────────
-    total_tasks = db.query(Task).filter(Task.user_id == uid).count()
+    total_tasks = db.query(Task).filter(Task.user_id == uid, Task.archived == False).count()
     pending_tasks = db.query(Task).filter(
-        Task.user_id == uid, Task.status == TaskStatus.PENDING
+        Task.user_id == uid, Task.status == TaskStatus.PENDING, Task.archived == False
     ).count()
     in_progress_tasks = db.query(Task).filter(
-        Task.user_id == uid, Task.status == TaskStatus.IN_PROGRESS
+        Task.user_id == uid, Task.status == TaskStatus.IN_PROGRESS, Task.archived == False
     ).count()
     completed_tasks = db.query(Task).filter(
-        Task.user_id == uid, Task.status == TaskStatus.COMPLETED
+        Task.user_id == uid, Task.status == TaskStatus.COMPLETED, Task.archived == False
     ).count()
 
     today = date.today()
     completed_today = db.query(Task).filter(
         Task.user_id == uid,
         Task.status == TaskStatus.COMPLETED,
+        Task.archived == False,
         func.date(Task.updated_at) == today,
     ).count()
 
@@ -51,6 +52,7 @@ def get_dashboard(
         Task.user_id == uid,
         Task.due_date < today,
         Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
+        Task.archived == False,
     ).count()
 
     # ── 即将到期任务（3天内） ────────────────────────────────────────────
@@ -62,6 +64,7 @@ def get_dashboard(
             Task.due_date >= today,
             Task.due_date <= upcoming_deadline,
             Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
+            Task.archived == False,
         )
         .order_by(Task.due_date)
         .limit(10)
@@ -147,7 +150,7 @@ def get_dashboard(
     # ── Recent items ─────────────────────────────────────────────────────
     recent_tasks = (
         db.query(Task)
-        .filter(Task.user_id == uid)
+        .filter(Task.user_id == uid, Task.archived == False)
         .order_by(Task.updated_at.desc())
         .limit(5)
         .all()
@@ -169,6 +172,27 @@ def get_dashboard(
     )
 
 
+    # ── Archive statistics ──────────────────────────────────────────────
+    last_month = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    archived_last_month = db.query(Task).filter(
+        Task.user_id == uid,
+        Task.archived == True,
+        Task.archived_month == last_month
+    ).count()
+
+    this_month = datetime.now().strftime("%Y-%m")
+    completed_this_month = db.query(Task).filter(
+        Task.user_id == uid,
+        Task.status == TaskStatus.COMPLETED,
+        Task.created_at >= datetime.now().replace(day=1),
+        Task.archived == False,
+    ).count()
+
+    total_archived = db.query(Task).filter(
+        Task.user_id == uid,
+        Task.archived == True,
+    ).count()
+
     # ── Build response ───────────────────────────────────────────────────
     return {
         "tasks": {
@@ -178,6 +202,13 @@ def get_dashboard(
             "completed": completed_tasks,
             "completed_today": completed_today,
             "overdue": overdue_tasks,
+        },
+        "archive": {
+            "last_month_count": archived_last_month,
+            "last_month": last_month,
+            "completed_this_month": completed_this_month,
+            "this_month": this_month,
+            "total_archived": total_archived,
         },
         "cron": {
             "total_jobs": total_cron,

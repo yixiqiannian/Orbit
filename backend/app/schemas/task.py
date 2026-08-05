@@ -40,6 +40,8 @@ class TaskResponse(BaseModel):
     parent_id: Optional[int]
     created_at: datetime
     updated_at: datetime
+    archived: bool = False
+    archived_month: Optional[str] = None
     children: list["TaskResponse"] = []
 
     @field_validator("children", mode="before")

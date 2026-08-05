@@ -74,6 +74,26 @@
           <el-option v-for="p in projects" :key="p.id" :label="p.name" :value="p.id" />
         </el-select>
       </el-form-item>
+      <el-form-item label="归档状态">
+        <el-select v-model="filterArchived" placeholder="全部" clearable style="width: 120px;" @change="loadTasks">
+          <el-option label="未归档" :value="false" />
+          <el-option label="已归档" :value="true" />
+        </el-select>
+      </el-form-item>
+      <el-form-item v-if="filterArchived === true" label="归档月份">
+        <el-date-picker
+          v-model="filterArchivedMonth"
+          type="month"
+          placeholder="选择月份"
+          value-format="YYYY-MM"
+          @change="loadTasks"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="handleArchive" :loading="archiving">
+          <el-icon><Box /></el-icon> 归档上月已完成任务
+        </el-button>
+      </el-form-item>
     </el-form>
 
     <!-- 任务卡片列表 -->
@@ -82,11 +102,14 @@
         v-for="task in sortedTasks"
         :key="task.id"
         class="task-card"
-        :class="getOverdueClass(task)"
+        :class="[getOverdueClass(task), { 'archived-card': task.archived }]"
         shadow="hover"
       >
         <div class="card-header">
           <div class="header-left">
+            <el-tag v-if="task.archived" type="info" size="small" effect="dark">
+              已归档 {{ task.archived_month || '' }}
+            </el-tag>
             <el-tag
               :type="getPriorityType(task.priority)"
               size="small"
@@ -236,7 +259,7 @@ import { taskCategoryApi, type TaskCategory } from '../api/taskCategory'
 import { projectApi, type Project } from '../api/project'
 import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { ElMessage } from 'element-plus'
-import { Calendar, ArrowDown } from '@element-plus/icons-vue'
+import { Calendar, ArrowDown, Box } from '@element-plus/icons-vue'
 import TaskLogTimeline from '../components/TaskLogTimeline.vue'
 import TaskHeatmap from '../components/TaskHeatmap.vue'
 
@@ -260,6 +283,9 @@ const heatmapData = ref<HeatmapData | null>(null)
 // 筛选
 const filterCategory = ref<number | undefined>(undefined)
 const filterProject = ref<number | undefined>(undefined)
+const filterArchived = ref<boolean | undefined>(undefined)
+const filterArchivedMonth = ref<string>('')
+const archiving = ref(false)
 
 // 日志弹窗
 const logDialogVisible = ref(false)
@@ -361,7 +387,9 @@ async function loadTasks() {
       type: activeTab.value,
       page: page.value,
       category_id: filterCategory.value,
-      project_id: filterProject.value
+      project_id: filterProject.value,
+      archived: filterArchived.value,
+      archived_month: filterArchived.value ? filterArchivedMonth.value || undefined : undefined
     })
     tasks.value = res.items
     total.value = res.total
@@ -412,6 +440,19 @@ async function handleDelete(id: number) {
     loadTasks()
   } catch (e: any) {
     ElMessage.error('删除失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
+  }
+}
+
+async function handleArchive() {
+  archiving.value = true
+  try {
+    await taskApi.archive()
+    ElMessage.success('归档完成')
+    loadTasks()
+  } catch (e: any) {
+    ElMessage.error('归档失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
+  } finally {
+    archiving.value = false
   }
 }
 
@@ -502,6 +543,12 @@ function getPriorityLabel(priority?: string) {
 .soon-card {
   background: #fdf6ec;
   border-left: 3px solid #e6a23c;
+}
+
+/* 归档任务样式 */
+.archived-card {
+  background: #f5f5f5;
+  opacity: 0.85;
 }
 
 .card-header {
