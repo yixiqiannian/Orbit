@@ -44,7 +44,43 @@ def list_tasks(
         .limit(size)
         .all()
     )
-    return TaskListResponse(total=total, items=items)
+
+    # 查询分类和项目名称
+    from app.models.task_category import TaskCategory
+    from app.models.project import Project
+
+    result_items = []
+    for task in items:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "type": task.type,
+            "status": task.status,
+            "priority": task.priority,
+            "category_id": task.category_id,
+            "category_name": None,
+            "project_id": task.project_id,
+            "project_name": None,
+            "due_date": task.due_date,
+            "parent_id": task.parent_id,
+            "created_at": task.created_at,
+            "updated_at": task.updated_at,
+            "archived": task.archived,
+            "archived_month": task.archived_month,
+            "children": []
+        }
+        if task.category_id:
+            cat = db.query(TaskCategory).filter(TaskCategory.id == task.category_id).first()
+            if cat:
+                task_dict["category_name"] = cat.name
+        if task.project_id:
+            proj = db.query(Project).filter(Project.id == task.project_id).first()
+            if proj:
+                task_dict["project_name"] = proj.name
+        result_items.append(task_dict)
+
+    return TaskListResponse(total=total, items=result_items)
 
 
 @router.post("", response_model=TaskResponse)

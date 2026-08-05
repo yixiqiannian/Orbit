@@ -35,7 +35,9 @@ class TaskResponse(BaseModel):
     status: TaskStatus
     priority: str
     category_id: Optional[int]
+    category_name: Optional[str] = None
     project_id: Optional[int]
+    project_name: Optional[str] = None
     due_date: Optional[date]
     parent_id: Optional[int]
     created_at: datetime
