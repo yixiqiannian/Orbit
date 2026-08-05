@@ -267,6 +267,37 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 最近日志 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <div class="card-header-with-action">
+              <span>📓 最近日志</span>
+              <el-button text size="small" @click="router.push('/daily-logs')">查看全部</el-button>
+            </div>
+          </template>
+          <div v-if="recentDailyLogs.length" class="recent-daily-logs-list">
+            <div
+              v-for="log in recentDailyLogs"
+              :key="log.id"
+              class="recent-daily-log-item"
+              @click="router.push('/daily-logs')"
+            >
+              <div class="recent-daily-log-header">
+                <span class="recent-daily-log-date">{{ formatDailyDate(log.date) }}</span>
+                <span class="recent-daily-log-mood">{{ getDailyMoodEmoji(log.mood) }}</span>
+                <span class="recent-daily-log-title">{{ log.title }}</span>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无日志" :image-size="60">
+            <el-button type="primary" size="small" @click="router.push('/daily-logs')">去写日志</el-button>
+          </el-empty>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -276,6 +307,7 @@ import { useRouter } from 'vue-router'
 import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { navApi, type NavStats } from '../api/nav'
 import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
+import { dailyLogApi, type DailyLog } from '../api/dailyLog'
 import { projectApi, type Project } from '../api/project'
 import { Refresh, Calendar } from '@element-plus/icons-vue'
 import TaskHeatmap from '../components/TaskHeatmap.vue'
@@ -315,6 +347,7 @@ const knowledgeStats = ref<{ total_categories: number; total_cards: number } | n
 const heatmapData = ref<HeatmapData | null>(null)
 const upcomingTasks = ref<any[]>([])
 const projectList = ref<Project[]>([])
+const recentDailyLogs = ref<DailyLog[]>([])
 
 function isOverdue(dueDate?: string): boolean {
   if (!dueDate) return false
@@ -328,14 +361,15 @@ function isOverdue(dueDate?: string): boolean {
 onMounted(async () => {
   loading.value = true
   try {
-    const [dashboardData, navData, kStats, kCard, heatmap, upcoming, projs] = await Promise.all([
+    const [dashboardData, navData, kStats, kCard, heatmap, upcoming, projs, dailyLogs] = await Promise.all([
       dashboardApi.getStats(),
       navApi.getStats().catch(() => ({ total_categories: 0, total_sites: 0 })),
       knowledgeApi.getStats().catch(() => null),
       knowledgeApi.randomCard().catch(() => null),
       dashboardApi.getHeatmap(365).catch(() => null),
       dashboardApi.getUpcomingTasks().catch(() => []),
-      projectApi.list({ status: 'active' }).catch(() => ({ items: [] }))
+      projectApi.list({ status: 'active' }).catch(() => ({ items: [] })),
+      dailyLogApi.recent(5).catch(() => [])
     ])
     Object.assign(stats, dashboardData)
     Object.assign(navStats, navData)
@@ -344,6 +378,7 @@ onMounted(async () => {
     heatmapData.value = heatmap
     upcomingTasks.value = upcoming || []
     projectList.value = (projs as any)?.items || projs || []
+    recentDailyLogs.value = dailyLogs || []
     await nextTick()
     initCharts()
   } catch (e) {
@@ -490,6 +525,17 @@ function getLogTypeLabel(type: string) {
     progress: '进度'
   }
   return map[type] || type
+}
+
+function formatDailyDate(dateStr: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
+}
+
+function getDailyMoodEmoji(mood: string) {
+  const map: Record<string, string> = { good: '😊', normal: '😐', bad: '😢' }
+  return map[mood] || '😐'
 }
 </script>
 
@@ -734,5 +780,45 @@ function getLogTypeLabel(type: string) {
 .project-progress-count {
   font-size: 13px;
   color: #909399;
+}
+.recent-daily-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recent-daily-log-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.recent-daily-log-item:hover {
+  background: #ecf5ff;
+}
+.recent-daily-log-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.recent-daily-log-date {
+  font-size: 13px;
+  color: #909399;
+  min-width: 80px;
+}
+.recent-daily-log-mood {
+  font-size: 16px;
+}
+.recent-daily-log-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

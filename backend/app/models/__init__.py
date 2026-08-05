@@ -11,7 +11,7 @@ from app.models.knowledge_card import KnowledgeCard
 from app.models.task_log import TaskLog
 from app.models.project import Project
 from app.models.task_category import TaskCategory
-
+from app.models.daily_log import DailyLog
 __all__ = [
     "User", "Task", "TaskType", "TaskStatus", "TaskPriority",
     "CronExecution", "ExecutionStatus",
@@ -21,4 +21,5 @@ __all__ = [
     "KnowledgeCategory", "KnowledgeCard",
     "TaskLog",
     "Project", "TaskCategory",
+    "DailyLog",
 ]

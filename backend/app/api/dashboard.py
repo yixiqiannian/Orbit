@@ -15,6 +15,7 @@ from app.models.email_account import EmailAccount
 from app.models.email_message import EmailMessage
 from app.models.task_log import TaskLog
 from app.models.project import Project
+from app.models.daily_log import DailyLog
 
 router = APIRouter(prefix="/api/dashboard", tags=["仪表盘"])
 
@@ -159,6 +160,14 @@ def get_dashboard(
         .limit(5)
         .all()
     )
+    # ── Recent daily logs ─────────────────────────────────────────────
+    recent_daily_logs = (
+        db.query(DailyLog)
+        .order_by(DailyLog.date.desc())
+        .limit(5)
+        .all()
+    )
+
 
     # ── Build response ───────────────────────────────────────────────────
     return {
@@ -227,6 +236,17 @@ def get_dashboard(
                 "created_at": l.created_at.isoformat() if l.created_at else None,
             }
             for l in recent_logs
+        ],
+        "recent_daily_logs": [
+            {
+                "id": l.id,
+                "date": str(l.date),
+                "title": l.title,
+                "content": l.content,
+                "mood": l.mood,
+                "tags": l.tags,
+            }
+            for l in recent_daily_logs
         ],
         "upcoming_tasks": [
             {
