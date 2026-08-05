@@ -4,21 +4,69 @@
 
 ## ✨ 功能特性
 
-- 📊 **仪表盘** - 汇总展示所有关键信息
-- 📋 **任务管理** - 每日任务 / 工作规划 / 目标管理（卡片布局）
-- ⏰ **定时任务** - 对接 Hermes Cron，页面执行，状态反馈
-- 📚 **阅读规划** - 微信读书同步，书架管理，进度追踪
-- 🔐 **用户认证** - JWT 登录，安全可靠
-- ⚙️ **可配置化** - 所有配置通过环境变量管理
+### 📊 仪表盘
+- 统计卡片（任务、定时任务、阅读、导航、邮箱）
+- 任务完成热力图（GitHub 风格）
+- 即将过期任务提醒
+- 项目进度展示
+- 每日一记（随机知识卡片）
+- 最近日志
+
+### 📋 任务管理
+- 每日任务 / 工作规划 / 目标管理（卡片布局）
+- 任务分类（自定义：学习、工作、生活等）
+- 项目管理（长期规划 + 周任务）
+- 任务日志（笔记、问题、知识点、进度）
+- 过期提示（已过期红色、即将过期橙色）
+
+### ⏰ 定时任务
+- 对接 Hermes Cron
+- 页面执行，状态反馈
+- 执行历史记录
+
+### 📚 阅读规划
+- 微信读书同步
+- 书架管理，进度追踪
+- 阅读统计
+
+### 📝 每日日志
+- 工作总结、学习笔记
+- 心情记录（😊好/😐一般/😢差）
+- Markdown 支持
+- 按日期筛选
+
+### 🧠 知识卡片
+- 分类管理（Linux、Docker、K8s等）
+- Markdown 内容
+- 仪表盘随机推送
+
+### 📧 邮箱管理
+- 多邮箱配置（163、QQ、Gmail）
+- 收件箱、未读统计
+- 发送邮件
+
+### 🧭 导航管理
+- 自定义导航分类
+- 前台独立展示页（/portal）
+- 自动识别网站信息
+
+### 🔐 用户认证
+- JWT 登录
+- 安全可靠
+
+---
 
 ## 🛠️ 技术栈
 
 | 模块 | 技术 |
 |------|------|
-| 前端 | Vue 3 + Vite + Element Plus |
+| 前端 | Vue 3 + Vite + Element Plus + ECharts |
 | 后端 | Python FastAPI + SQLAlchemy |
 | 数据库 | MySQL 8.x |
 | 认证 | JWT (JSON Web Token) |
+| 定时任务 | Hermes Cron |
+
+---
 
 ## 📦 项目结构
 
@@ -37,6 +85,7 @@ Orbit/
 │   └── src/
 │       ├── api/          # API 封装
 │       ├── views/        # 页面组件
+│       ├── components/   # 公共组件
 │       ├── stores/       # 状态管理
 │       └── router/       # 路由配置
 ├── .env.example          # 环境变量示例
@@ -49,338 +98,204 @@ Orbit/
 
 ## 🚀 快速开始
 
-### 前置条件
+### 环境要求
 
-- **Python 3.11+**（推荐 3.11，3.14 可能有兼容问题）
-- **Node.js 18+**
-- **MySQL 8.x**（本地或远程）
+- Python 3.11+
+- Node.js 18+
+- MySQL 8.x
 
 ### 1. 克隆项目
 
 ```bash
-git clone git@github.com:yixiqiannian/Orbit.git
+git clone https://github.com/yixiqiannian/Orbit.git
 cd Orbit
 ```
 
-### 2. 创建数据库
+### 2. 配置环境变量
 
-打开 MySQL 命令行或 Navicat，执行：
+```bash
+# 复制示例文件
+cp .env.example backend/.env
 
-```sql
-CREATE DATABASE orbit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# 编辑配置
+# 修改数据库连接、JWT密钥等
 ```
 
-### 3. 配置后端
+### 3. 初始化数据库
 
 ```bash
 cd backend
-
-# 复制环境变量示例
-cp ../.env.example .env
-
-# 编辑 .env 文件，填入你的配置
-```
-
-**.env 配置说明：**
-
-```env
-# 数据库配置（必填）
-DB_HOST=localhost          # 数据库地址
-DB_PORT=3306               # 数据库端口
-DB_USER=root               # 数据库用户名
-DB_PASSWORD=your_password  # 数据库密码
-DB_NAME=orbit              # 数据库名
-
-# JWT 配置（建议修改）
-JWT_SECRET=your-secret-key-here  # JWT 密钥，建议随机生成
-JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=1440          # Token 有效期（分钟）
-
-# 微信读书配置（可选）
-WEREAD_API_KEY=wrk-xxxxxx  # 微信读书 API Key
-
-# 应用配置
-APP_DEBUG=false
-CORS_ORIGINS=http://localhost:5173  # 前端地址
-```
-
-### 4. 初始化后端
-
-```bash
-# 创建虚拟环境
 python -m venv venv
-
-# 激活虚拟环境
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# 安装依赖
+venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 
-# 初始化数据库表
+# 创建数据库
+mysql -u root -p -e "CREATE DATABASE orbit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 初始化表
 python scripts/init_db.py
 
-# 创建默认管理员账户
+# 创建管理员
 python scripts/init_admin.py
 ```
 
-**预期输出：**
-```
-Database tables created successfully!
-Admin user created: admin / orbit2026
-```
-
-### 5. 启动后端
+### 4. 启动后端
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd backend
+venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**预期输出：**
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
-INFO:     Application startup complete.
-```
-
-### 6. 配置并启动前端
-
-打开新的终端窗口：
+### 5. 启动前端
 
 ```bash
 cd frontend
-
-# 创建环境变量文件
-echo VITE_API_BASE_URL=http://localhost:8000 > .env
-
-# 安装依赖
 npm install
-
-# 启动开发服务器
 npm run dev
 ```
 
-**预期输出：**
-```
-VITE v8.x.x  ready in xxx ms
+### 6. 访问系统
 
-➜  Local:   http://localhost:5173/
-```
+- 前端：http://localhost:5173
+- 后端 API：http://localhost:8000
+- API 文档：http://localhost:8000/docs
 
-### 7. 访问系统
-
-打开浏览器访问 **http://localhost:5173**
-
-**默认登录账户：**
+**默认登录：**
 - 用户名：`admin`
 - 密码：`orbit2026`
 
-⚠️ **请登录后立即修改密码！**
-
 ---
 
-## 🪟 Windows 一键启动
+## ⚙️ 配置说明
 
-双击 `start.bat` 文件即可同时启动前后端。
-
----
-
-## 📖 功能说明
-
-### 仪表盘
-
-首页汇总展示：
-- 任务统计（待办、进行中、今日完成、逾期）
-- 定时任务状态
-- 阅读统计（总书籍、在读、已读、平均进度）
-- 最近任务和执行记录
-
-### 任务管理
-
-支持三种任务类型：
-- **每日任务** - 每天需要完成的任务
-- **工作规划** - 阶段性工作计划
-- **目标管理** - 长期目标追踪
-
-功能：
-- 卡片布局，直观展示
-- 优先级标记（普通/重要/紧急）
-- 状态切换（待办/进行中/已完成/已取消）
-- 截止日期设置
-
-### 定时任务
-
-对接 Hermes Cron，展示所有定时任务：
-- 调度规则（cron 表达式）
-- 上次执行时间
-- 执行状态（成功/失败）
-- 立即执行功能
-
-### 阅读规划
-
-集成微信读书 API：
-- 书架同步（自动导入微信读书书籍）
-- 阅读进度追踪
-- 状态管理（想读/在读/已读）
-- 单本书进度同步
-- 阅读统计
-
----
-
-## 🔧 配置详解
-
-### 数据库配置
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `DB_HOST` | 数据库地址 | `localhost` |
-| `DB_PORT` | 数据库端口 | `3306` |
-| `DB_USER` | 数据库用户名 | `root` |
-| `DB_PASSWORD` | 数据库密码 | - |
-| `DB_NAME` | 数据库名 | `orbit` |
-
-支持远程 MySQL，只需修改 `DB_HOST` 为远程地址。
-
-### JWT 配置
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `JWT_SECRET` | JWT 密钥 | `change-this` |
-| `JWT_ALGORITHM` | JWT 算法 | `HS256` |
-| `JWT_EXPIRE_MINUTES` | Token 过期时间 | `1440` |
-
-生成随机密钥：
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-### 微信读书配置
-
-| 变量 | 说明 |
-|------|------|
-| `WEREAD_API_KEY` | 微信读书 API Key（格式：`wrk-xxxxxx`） |
-
-获取方式：联系微信读书官方申请 API Key。
-
----
-
-## 🐛 常见问题
-
-### 1. 数据库连接失败
-
-```
-pymysql.err.OperationalError: (1045, "Access denied")
-```
-
-**解决方案：**
-- 检查 `.env` 中的数据库密码是否正确
-- 确认 MySQL 服务已启动
-- 确认用户有权限访问数据库
-
-### 2. Python 版本不兼容
-
-```
-TypeError: ForwardRef._evaluate() missing 1 required keyword-only argument
-```
-
-**解决方案：**
-使用 Python 3.11 或 3.12，不要使用 3.14。
+### 后端配置（backend/.env）
 
 ```bash
-# 删除旧的虚拟环境
-rmdir /s /q venv
+# 数据库
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=orbit
 
-# 使用 Python 3.11 创建
-C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe -m venv venv
+# JWT
+JWT_SECRET=your-secret-key
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=1440
+
+# 应用
+APP_PORT=8000
+APP_DEBUG=true
+
+# CORS（前端地址）
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+
+# 微信读书（可选）
+WEREAD_API_KEY=your_api_key
 ```
 
-### 3. 前端无法访问
+### 前端配置（frontend/.env）
 
+```bash
+# 后端 API 地址
+VITE_API_BASE_URL=http://localhost:8000
 ```
-ERR_CONNECTION_REFUSED
-```
-
-**解决方案：**
-- 确认前端已启动（端口 5173）
-- 尝试访问 http://127.0.0.1:5173
-- 检查防火墙设置
-
-### 4. CORS 错误
-
-```
-Access to XMLHttpRequest has been blocked by CORS
-```
-
-**解决方案：**
-确认 `.env` 中 `CORS_ORIGINS` 包含前端地址。
-
-### 5. 微信读书同步失败
-
-**解决方案：**
-- 检查 `WEREAD_API_KEY` 是否正确
-- 确认 API Key 未过期
-- 检查网络连接
 
 ---
 
-## 📝 API 文档
+## 🐳 Docker 部署
 
-启动后端后访问：
-- Swagger UI：http://localhost:8000/docs
-- ReDoc：http://localhost:8000/redoc
+### 构建镜像
 
-### 主要 API 端点
+```bash
+# 后端
+cd backend
+docker build -t orbit-backend .
 
-| 模块 | 端点 | 方法 | 说明 |
-|------|------|------|------|
-| 认证 | `/api/auth/login` | POST | 用户登录 |
-| 认证 | `/api/auth/me` | GET | 获取当前用户 |
-| 任务 | `/api/tasks` | GET | 获取任务列表 |
-| 任务 | `/api/tasks` | POST | 创建任务 |
-| 任务 | `/api/tasks/{id}` | PUT | 更新任务 |
-| 任务 | `/api/tasks/{id}` | DELETE | 删除任务 |
-| 定时任务 | `/api/cron/jobs/list` | GET | 获取定时任务列表 |
-| 定时任务 | `/api/cron/jobs/{id}/run` | POST | 执行定时任务 |
-| 阅读 | `/api/reading/books` | GET | 获取书架 |
-| 阅读 | `/api/reading/sync` | POST | 同步微信读书 |
-| 阅读 | `/api/reading/sync/{id}` | GET | 同步单本书进度 |
-| 仪表盘 | `/api/dashboard` | GET | 获取统计数据 |
+# 前端
+cd frontend
+docker build -t orbit-frontend .
+```
+
+### 启动容器
+
+```bash
+# 创建网络
+docker network create orbit-net
+
+# 启动 MySQL
+docker run -d \
+  --name orbit-mysql \
+  --network orbit-net \
+  -e MYSQL_ROOT_PASSWORD=your_password \
+  -e MYSQL_DATABASE=orbit \
+  -p 3306:3306 \
+  mysql:8.0
+
+# 启动后端
+docker run -d \
+  --name orbit-backend \
+  --network orbit-net \
+  -e DB_HOST=orbit-mysql \
+  -e DB_PASSWORD=your_password \
+  -e JWT_SECRET=your_secret \
+  -p 8000:8000 \
+  orbit-backend
+
+# 启动前端
+docker run -d \
+  --name orbit-frontend \
+  --network orbit-net \
+  -p 5173:80 \
+  orbit-frontend
+```
+
+### Nginx 配置（前端容器内）
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+    
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+    
+    location /api/ {
+        proxy_pass http://orbit-backend:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
 
 ---
 
-## 🔄 更新日志
+## 📝 更新日志
 
-### v1.1.0 (2026-07-13)
-- ✅ 定时任务页面显示 Hermes 定时任务
-- ✅ 微信读书同步获取阅读进度
-- ✅ 任务和阅读页面改为卡片布局
-- ✅ 修复 CORS 配置问题
-- ✅ 修复 Python 3.14 兼容问题
-
-### v1.0.0 (2026-07-13)
-- 🎉 初始版本
-- ✅ 用户认证系统
-- ✅ 任务管理模块
-- ✅ 定时任务模块
-- ✅ 阅读规划模块
-- ✅ 仪表盘首页
+### v1.0.0 (2026-07-29)
+- 初始版本发布
+- 任务管理（每日任务/工作规划/目标管理）
+- 定时任务（对接 Hermes Cron）
+- 阅读规划（微信读书同步）
+- 邮箱管理（163/QQ/Gmail）
+- 导航管理
+- 知识卡片
+- 每日日志
+- 仪表盘（热力图、统计、图表）
 
 ---
 
-## 📄 License
+## 📄 许可证
 
 MIT License
 
 ---
 
-## 🤝 贡献
+## 👨‍💻 作者
 
-欢迎提交 Issue 和 Pull Request！
-
----
-
-## 💬 联系方式
-
-- GitHub：[@yixiqiannian](https://github.com/yixiqiannian)
+**Moon**
 - 公众号：Moon杂选
+- GitHub：[@yixiqiannian](https://github.com/yixiqiannian)
