@@ -292,6 +292,39 @@ def get_dashboard(
     }
 
 
+@router.get("/upcoming-tasks")
+def get_upcoming_tasks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取即将到期的任务（3天内）"""
+    uid = current_user.id
+    today = date.today()
+    upcoming_deadline = today + timedelta(days=3)
+    upcoming_tasks = (
+        db.query(Task)
+        .filter(
+            Task.user_id == uid,
+            Task.due_date >= today,
+            Task.due_date <= upcoming_deadline,
+            Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
+            Task.archived == False,
+        )
+        .order_by(Task.due_date)
+        .limit(10)
+        .all()
+    )
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "due_date": str(t.due_date) if t.due_date else None,
+            "status": t.status,
+        }
+        for t in upcoming_tasks
+    ]
+
+
 @router.get("/heatmap")
 def get_heatmap(
     days: int = Query(365, ge=30, le=730),

@@ -20,7 +20,7 @@ export interface ProjectListResponse {
 
 export const projectApi = {
   list(params?: { status?: string; page?: number; size?: number }) {
-    return api.get<any, ProjectListResponse>('/api/projects', { params })
+    return api.get<any, ProjectListResponse>('/api/projects/', { params })
   },
   getAll() {
     return api.get<any, Project[]>('/api/projects', { params: { size: 999 } })
