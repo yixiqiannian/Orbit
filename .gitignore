@@ -27,6 +27,10 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# QA screenshots (generated during testing)
+qa_shots/
+qa_shots_t13/
+
 # Docker
 docker-compose.override.yml
 

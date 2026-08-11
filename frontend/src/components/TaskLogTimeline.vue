@@ -170,7 +170,7 @@ function getTypeColor(type: string) {
     knowledge: '#67C23A',
     progress: '#E6A23C'
   }
-  return map[type] || '#909399'
+  return map[type] || 'var(--el-text-color-secondary)'
 }
 
 function getTypeTag(type: string): '' | 'success' | 'warning' | 'danger' | 'info' {
@@ -228,7 +228,7 @@ watch(() => props.taskId, (id) => {
 .log-content {
   font-size: 14px;
   line-height: 1.7;
-  color: #303133;
+  color: var(--el-text-color-regular);
 }
 
 .log-content :deep(h1),
@@ -245,11 +245,11 @@ watch(() => props.taskId, (id) => {
 }
 
 .log-content :deep(code) {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #e6a23c;
+  color: var(--el-color-warning);
 }
 
 .log-content :deep(pre) {
@@ -274,9 +274,9 @@ watch(() => props.taskId, (id) => {
 }
 
 .log-content :deep(blockquote) {
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--el-color-primary);
   padding-left: 12px;
   margin: 8px 0;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 </style>

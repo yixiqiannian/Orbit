@@ -52,7 +52,7 @@
       >
         <div class="book-cover">
           <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" />
-          <div v-else class="no-cover">📚</div>
+          <div v-else class="no-cover"><el-icon :size="32"><Reading /></el-icon></div>
         </div>
 
         <div class="book-info">
@@ -135,6 +135,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { Reading } from '@element-plus/icons-vue'
 import { readingApi, type Book, type ReadingStats } from '../api/reading'
 import { ElMessage } from 'element-plus'
 
@@ -284,16 +285,17 @@ function formatDate(dateStr?: string) {
 .stat-number {
   font-size: 28px;
   font-weight: bold;
-  color: #409eff;
+  color: var(--el-color-primary);
+  font-family: var(--font-code);
 }
 
 .stat-card.reading .stat-number { color: #e6a23c; }
 .stat-card.finished .stat-number { color: #67c23a; }
-.stat-card.progress .stat-number { color: #909399; }
+.stat-card.progress .stat-number { color: var(--el-text-color-secondary); }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -333,8 +335,8 @@ function formatDate(dateStr?: string) {
   width: 80px;
   height: 110px;
   overflow: hidden;
-  border-radius: 4px;
-  background: #f5f7fa;
+  border-radius: var(--radius-sm);
+  background: var(--el-fill-color-light);
 }
 
 .book-cover img {
@@ -349,7 +351,7 @@ function formatDate(dateStr?: string) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  color: var(--el-text-color-secondary);
 }
 
 .book-info {
@@ -360,7 +362,7 @@ function formatDate(dateStr?: string) {
 .book-title {
   margin: 0 0 4px;
   font-size: 15px;
-  color: #303133;
+  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -369,7 +371,7 @@ function formatDate(dateStr?: string) {
 .book-author {
   margin: 0 0 8px;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .book-status {
@@ -382,7 +384,7 @@ function formatDate(dateStr?: string) {
 
 .last-read {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 

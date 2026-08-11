@@ -2,7 +2,7 @@
   <div class="tasks-page">
     <!-- 热力图 -->
     <el-card style="margin-bottom: 20px;">
-      <template #header>📅 任务完成热力图</template>
+      <template #header><el-icon style="vertical-align: -2px; margin-right: 6px;"><Calendar /></el-icon>任务完成热力图</template>
       <TaskHeatmap
         :data="heatmapData?.data"
         :start-date="heatmapData?.start_date"
@@ -238,7 +238,7 @@
           <el-input v-model="newCategory.name" placeholder="请输入分类名称" />
         </el-form-item>
         <el-form-item label="图标">
-          <el-input v-model="newCategory.icon" placeholder="如：📚" style="width: 80px;" />
+          <el-input v-model="newCategory.icon" placeholder="图标" style="width: 80px;" />
         </el-form-item>
         <el-form-item label="颜色">
           <el-color-picker v-model="newCategory.color" />
@@ -295,8 +295,8 @@ const selectedTask = ref<Task | null>(null)
 const showAddCategory = ref(false)
 const newCategory = ref({
   name: '',
-  icon: '📚',
-  color: '#409EFF'
+  icon: '',
+  color: '#1e40af'
 })
 
 // 过期任务排序：过期的置顶
@@ -462,7 +462,7 @@ async function handleAddCategory() {
     await taskCategoryApi.create(newCategory.value)
     ElMessage.success('分类创建成功')
     showAddCategory.value = false
-    newCategory.value = { name: '', icon: '📚', color: '#409EFF' }
+    newCategory.value = { name: '', icon: '', color: '#1e40af' }
     loadCategories()
   } catch (e: any) {
     ElMessage.error('创建失败: ' + (e?.response?.data?.detail || e?.message || '未知错误'))
@@ -497,11 +497,10 @@ function getStatusLabel(status?: string) {
 function getPriorityType(priority?: string) {
   const map: Record<string, string> = {
     low: 'info',
-    normal: '',
     high: 'warning',
     urgent: 'danger'
   }
-  return map[priority || ''] || ''
+  return map[priority || ''] || undefined
 }
 
 function getPriorityLabel(priority?: string) {
@@ -534,20 +533,20 @@ function getPriorityLabel(priority?: string) {
   transform: translateY(-2px);
 }
 
-/* 过期任务样式 */
+/* 过期任务样式（半透明玻璃色调，深浅色均适用） */
 .overdue-card {
-  background: #fef0f0;
-  border-left: 3px solid #f56c6c;
+  background: color-mix(in srgb, var(--el-color-danger) 10%, var(--surface));
+  border-left: 3px solid var(--el-color-danger);
 }
 
 .soon-card {
-  background: #fdf6ec;
-  border-left: 3px solid #e6a23c;
+  background: color-mix(in srgb, var(--el-color-warning) 10%, var(--surface));
+  border-left: 3px solid var(--el-color-warning);
 }
 
 /* 归档任务样式 */
 .archived-card {
-  background: #f5f5f5;
+  background: color-mix(in srgb, var(--el-text-color-secondary) 8%, var(--surface));
   opacity: 0.85;
 }
 
@@ -568,18 +567,18 @@ function getPriorityLabel(priority?: string) {
 .card-body h3 {
   margin: 0 0 8px;
   font-size: 16px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .card-body h3.completed {
   text-decoration: line-through;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .card-body .desc {
   margin: 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -591,7 +590,7 @@ function getPriorityLabel(priority?: string) {
   align-items: center;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .due-info {
@@ -605,7 +604,7 @@ function getPriorityLabel(priority?: string) {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .footer-actions {
@@ -624,14 +623,14 @@ function getPriorityLabel(priority?: string) {
   width: 200px;
   flex-shrink: 0;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
   border-radius: 8px;
 }
 
 .log-dialog-left h4 {
   margin: 0 0 16px;
   font-size: 15px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .task-info-item {
@@ -643,7 +642,7 @@ function getPriorityLabel(priority?: string) {
 }
 
 .task-info-item .label {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   flex-shrink: 0;
 }
 

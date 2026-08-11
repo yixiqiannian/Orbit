@@ -40,7 +40,7 @@ function handleMenuClick(path: string) {
 
 <template>
   <div class="sidebar">
-    <div class="sidebar-header">
+    <div class="sidebar-header" :class="{ collapsed: appStore.sidebarCollapsed }">
       <h2 v-show="!appStore.sidebarCollapsed" class="logo">Orbit</h2>
       <el-icon class="collapse-btn" @click="appStore.toggleSidebar">
         <Fold v-if="!appStore.sidebarCollapsed" />
@@ -50,9 +50,7 @@ function handleMenuClick(path: string) {
     <el-menu
       :default-active="route.path"
       :collapse="appStore.sidebarCollapsed"
-      background-color="#304156"
-      text-color="#bfcbd9"
-      active-text-color="#409eff"
+      class="sidebar-menu"
       @select="(index: string) => handleMenuClick(index)"
     >
       <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
@@ -64,10 +62,20 @@ function handleMenuClick(path: string) {
 </template>
 
 <style scoped>
+/* 玻璃面板：半透明背景 + blur(20px) + 圆角 16px + 1px 半透明描边 + 蓝色光晕阴影 */
 .sidebar {
   height: 100%;
   display: flex;
   flex-direction: column;
+  margin: 12px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.55));
+  backdrop-filter: blur(var(--glass-blur, 20px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.6));
+  border-radius: var(--glass-radius, 16px);
+  box-shadow: var(--glass-shadow, 0 8px 32px rgba(37, 99, 235, 0.14));
+  overflow: hidden;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .sidebar-header {
@@ -75,26 +83,102 @@ function handleMenuClick(path: string) {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  color: #fff;
+  color: var(--color-foreground, #0f172a);
+  transition: color 0.25s ease;
 }
 
+.sidebar-header.collapsed {
+  justify-content: center;
+  padding: 16px 0;
+}
+
+/* Logo：Fredoka 加粗 + 品牌渐变文字（#2563EB → #3B82F6 → #F97316） */
 .logo {
   margin: 0;
-  font-size: 20px;
+  font-family: var(--font-display, 'Fredoka', 'Fira Sans', sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   white-space: nowrap;
+  background: var(--gradient-brand, linear-gradient(90deg, #2563eb, #3b82f6, #f97316));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .collapse-btn {
   cursor: pointer;
   font-size: 18px;
-  color: #bfcbd9;
+  color: var(--color-foreground, #0f172a);
+  transition: color 0.2s ease, transform 0.25s ease;
 }
 
 .collapse-btn:hover {
-  color: #409eff;
+  color: var(--color-primary, #2563eb);
+  transform: scale(1.12);
 }
 
-.el-menu {
+.sidebar-menu {
+  flex: 1;
   border-right: none;
+  background: transparent;
+  padding: 4px 8px 12px;
+  overflow-y: auto;
+}
+
+/* 菜单项：圆角 8px，hover 用主色浅变体，active 用 #2563EB 渐变高亮 */
+:deep(.el-menu-item) {
+  height: 42px;
+  line-height: 42px;
+  margin-bottom: 4px;
+  border-radius: var(--glass-radius-sm, 8px);
+  color: var(--color-foreground, #0f172a);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:deep(.el-menu-item .el-icon) {
+  color: inherit;
+}
+
+:deep(.el-menu-item:hover) {
+  background-color: var(--glass-hover, rgba(37, 99, 235, 0.08));
+  color: var(--color-primary, #2563eb);
+}
+
+:deep(.el-menu-item.is-active) {
+  background: var(--gradient-active, linear-gradient(90deg, #2563eb, #3b82f6));
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+:deep(.el-menu-item.is-active .el-icon) {
+  color: #ffffff;
+}
+
+/* 折叠态：菜单宽度铺满玻璃面板，图标居中 */
+:deep(.el-menu--collapse) {
+  width: 100%;
+}
+
+:deep(.el-menu--collapse .el-menu-item) {
+  width: 100%;
+  padding: 0;
+  justify-content: center;
+}
+
+/* 折叠时弹出层（tooltip）文字保持浅色可读 */
+:deep(.el-menu--collapse .el-tooltip__trigger) {
+  color: var(--color-foreground, #0f172a);
+}
+
+/* 细滚动条（菜单过长时） */
+.sidebar-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 4px;
 }
 </style>

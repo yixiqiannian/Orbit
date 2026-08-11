@@ -1,7 +1,7 @@
 <template>
   <div class="nav-manage">
     <div class="page-header">
-      <h2>🧭 导航管理</h2>
+      <h2>导航管理</h2>
       <el-button type="primary" @click="openPortal">
         <el-icon><Link /></el-icon>
         打开导航页
@@ -402,7 +402,7 @@ function openPortal() {
 }
 .page-header h2 {
   margin: 0;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .card-header {
   display: flex;
@@ -424,11 +424,11 @@ function openPortal() {
   transition: background-color 0.2s;
 }
 .category-item:hover {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
 }
 .category-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 .category-info {
   display: flex;

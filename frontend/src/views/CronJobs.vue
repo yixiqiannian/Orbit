@@ -1,7 +1,7 @@
 <template>
   <div class="cron-page">
     <div class="page-header">
-      <h2>⏰ 定时任务</h2>
+      <h2>定时任务</h2>
       <el-button @click="loadJobs" :loading="loading">刷新</el-button>
     </div>
 
@@ -141,6 +141,7 @@ async function viewHistory(jobId: string) {
 
 .page-header h2 {
   margin: 0;
+  color: var(--el-text-color-primary);
 }
 
 .card-grid {
@@ -182,11 +183,11 @@ async function viewHistory(jobId: string) {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .info-item .label {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   min-width: 80px;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="knowledge-manage">
     <div class="page-header">
-      <h2>🧠 知识卡片</h2>
+      <h2>知识卡片</h2>
       <el-button type="primary" @click="openCardDialog()">
         <el-icon><Plus /></el-icon>新建卡片
       </el-button>
@@ -26,7 +26,7 @@
               @click="selectCategory(null)"
             >
               <div class="category-info">
-                <span>📋 全部</span>
+                <span>全部</span>
               </div>
               <el-tag size="small" type="info">{{ totalCardCount }}</el-tag>
             </div>
@@ -40,9 +40,11 @@
               <div class="category-info">
                 <span
                   class="category-dot"
-                  :style="{ backgroundColor: cat.color || '#409eff' }"
+                  :style="{ backgroundColor: cat.color || '#1e40af' }"
                 ></span>
-                <span>{{ cat.icon || '📄' }} {{ cat.name }}</span>
+                <span v-if="cat.icon">{{ cat.icon }}</span>
+                <el-icon v-else class="cat-icon-fallback"><Document /></el-icon>
+                <span>{{ cat.name }}</span>
               </div>
               <div class="category-actions">
                 <el-tag size="small" type="info">{{ cat.card_count || 0 }}</el-tag>
@@ -126,7 +128,7 @@
           <el-input v-model="categoryForm.name" placeholder="请输入分类名称" />
         </el-form-item>
         <el-form-item label="图标">
-          <el-input v-model="categoryForm.icon" placeholder="图标名称（如 📚）" />
+          <el-input v-model="categoryForm.icon" placeholder="图标名称" />
         </el-form-item>
         <el-form-item label="颜色">
           <el-color-picker v-model="categoryForm.color" />
@@ -188,7 +190,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Search } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Search, Document } from '@element-plus/icons-vue'
 import { knowledgeApi, type KnowledgeCategory, type KnowledgeCard } from '../api/knowledge'
 import CardDetail from '../components/CardDetail.vue'
 
@@ -205,7 +207,7 @@ const categoryDialogVisible = ref(false)
 const categoryForm = reactive({
   name: '',
   icon: '',
-  color: '#409eff'
+  color: '#1e40af'
 })
 
 // 卡片对话框
@@ -268,7 +270,7 @@ function handleSearch() {
 function openCategoryDialog() {
   categoryForm.name = ''
   categoryForm.icon = ''
-  categoryForm.color = '#409eff'
+  categoryForm.color = '#1e40af'
   categoryDialogVisible.value = true
 }
 
@@ -376,7 +378,7 @@ function openCardDetail(card: KnowledgeCard) {
 }
 .page-header h2 {
   margin: 0;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .card-header {
   display: flex;
@@ -398,11 +400,11 @@ function openCardDetail(card: KnowledgeCard) {
   transition: background-color 0.2s;
 }
 .category-item:hover {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
 }
 .category-item.active {
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 .category-info {
   display: flex;
@@ -413,6 +415,11 @@ function openCardDetail(card: KnowledgeCard) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+.cat-icon-fallback {
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
   flex-shrink: 0;
 }
 .category-actions {
@@ -431,15 +438,20 @@ function openCardDetail(card: KnowledgeCard) {
   gap: 16px;
 }
 .card-item {
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  background: var(--surface);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
   padding: 16px;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 .card-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.15);
+  transform: translateY(-2px);
+  border-color: var(--el-color-primary);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-glow);
 }
 .card-item-header {
   display: flex;
@@ -449,7 +461,7 @@ function openCardDetail(card: KnowledgeCard) {
 }
 .card-title {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   font-size: 15px;
   flex: 1;
   overflow: hidden;
@@ -465,7 +477,7 @@ function openCardDetail(card: KnowledgeCard) {
   opacity: 1;
 }
 .card-preview {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 10px;

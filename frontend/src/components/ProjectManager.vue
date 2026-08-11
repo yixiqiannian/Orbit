@@ -197,7 +197,7 @@ async function handleDelete(id: number) {
 
 function getStatusType(status: string) {
   const map: Record<string, string> = { active: '', completed: 'success', archived: 'info' }
-  return map[status] || ''
+  return map[status] || undefined
 }
 
 function getStatusLabel(status: string) {
@@ -237,13 +237,13 @@ defineExpose({ loadProjects })
 .project-title-row h3 {
   margin: 0;
   font-size: 16px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .project-desc {
   margin: 0;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -257,7 +257,7 @@ defineExpose({ loadProjects })
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   margin-bottom: 4px;
 }
 
@@ -270,7 +270,7 @@ defineExpose({ loadProjects })
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .project-actions {
@@ -279,18 +279,18 @@ defineExpose({ loadProjects })
   gap: 4px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .add-card {
   cursor: pointer;
-  border: 2px dashed #dcdfe6;
-  background: #fafafa;
+  border: 2px dashed var(--glass-border);
+  background: var(--glass-hover);
 }
 
 .add-card:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 10%, var(--surface));
 }
 
 .add-card-content {
@@ -300,10 +300,10 @@ defineExpose({ loadProjects })
   justify-content: center;
   min-height: 160px;
   gap: 8px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .add-card:hover .add-card-content {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 </style>

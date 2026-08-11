@@ -1,7 +1,7 @@
 <template>
   <div class="daily-logs" v-loading="loading">
     <div class="page-header">
-      <h2>📓 每日日志</h2>
+      <h2>每日日志</h2>
       <div class="header-actions">
         <el-date-picker
           v-model="dateRange"
@@ -282,7 +282,7 @@ onMounted(() => {
 .page-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .header-actions {
   display: flex;
@@ -294,14 +294,19 @@ onMounted(() => {
   gap: 16px;
 }
 .log-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
+  background: var(--surface);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-glass);
   padding: 16px 20px;
-  transition: box-shadow 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 .log-card:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-glow);
 }
 .log-header {
   display: flex;
@@ -316,7 +321,7 @@ onMounted(() => {
 }
 .log-date {
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 .log-mood {
   font-size: 18px;
@@ -328,11 +333,11 @@ onMounted(() => {
 .log-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 8px;
 }
 .log-content {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
   line-height: 1.7;
   max-height: 300px;
@@ -349,17 +354,17 @@ onMounted(() => {
   margin: 12px 0 8px;
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .markdown-body p {
   margin: 6px 0;
 }
 .markdown-body code {
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #e6a23c;
+  color: var(--el-color-warning);
 }
 .markdown-body pre {
   background: #1e1e1e;
@@ -382,13 +387,13 @@ onMounted(() => {
   margin: 3px 0;
 }
 .markdown-body blockquote {
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--el-color-primary);
   padding-left: 12px;
   margin: 8px 0;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 .markdown-body a {
-  color: #409eff;
+  color: var(--el-color-primary);
   text-decoration: none;
 }
 </style>

@@ -25,25 +25,34 @@ const appStore = useAppStore()
 <style scoped>
 .layout-container {
   height: 100vh;
+  /* 氛围光背景：蓝色/橙色大光斑（MASTER.md「玻璃拟态」），玻璃才有折射质感 */
+  background-color: var(--color-background, #f8fafc);
+  background-image:
+    radial-gradient(900px 620px at 10% -8%, rgba(37, 99, 235, 0.18), transparent 62%),
+    radial-gradient(760px 520px at 98% 4%, rgba(249, 115, 22, 0.14), transparent 62%),
+    radial-gradient(820px 640px at 85% 102%, rgba(59, 130, 246, 0.14), transparent 62%),
+    radial-gradient(560px 420px at 24% 98%, rgba(249, 115, 22, 0.1), transparent 60%);
+  transition: background-color 0.3s ease;
 }
 
 .layout-aside {
-  background-color: #304156;
-  transition: width 0.3s;
+  background: transparent;
+  border-right: none;
+  transition: width 0.3s ease;
   overflow: hidden;
 }
 
 .layout-header {
-  background-color: #fff;
-  border-bottom: 1px solid #e6e6e6;
+  background: transparent;
+  border-bottom: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .layout-main {
-  background-color: #f5f7fa;
+  background: transparent;
   padding: 20px;
+  overflow-y: auto;
 }
 </style>

@@ -496,14 +496,18 @@ onMounted(() => loadAccounts())
 .email-page {
   display: flex;
   height: calc(100vh - 60px);
-  background: #fff;
-  border-radius: 8px;
+  background: var(--surface);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--shadow-glass);
   overflow: hidden;
 }
 
 .email-sidebar {
   width: 280px;
-  border-right: 1px solid #e4e7ed;
+  border-right: 1px solid var(--el-border-color);
   display: flex;
   flex-direction: column;
 }
@@ -513,7 +517,7 @@ onMounted(() => loadAccounts())
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .sidebar-header h3 {
@@ -538,11 +542,11 @@ onMounted(() => loadAccounts())
 }
 
 .account-item:hover {
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
 }
 
 .account-item.active {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9);
 }
 
 .account-info {
@@ -555,7 +559,7 @@ onMounted(() => loadAccounts())
 
 .account-icon {
   font-size: 24px;
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .account-detail {
@@ -573,7 +577,7 @@ onMounted(() => loadAccounts())
 
 .account-email {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -601,7 +605,7 @@ onMounted(() => loadAccounts())
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .toolbar-left {
@@ -630,17 +634,17 @@ onMounted(() => loadAccounts())
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .message-item:hover {
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
 }
 
 .message-item.unread {
-  background: #fafafa;
+  background: var(--el-fill-color-lighter);
 }
 
 .message-item.unread .msg-sender,
@@ -649,7 +653,7 @@ onMounted(() => loadAccounts())
 }
 
 .message-item.selected {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9);
 }
 
 .msg-left {
@@ -682,7 +686,7 @@ onMounted(() => loadAccounts())
 
 .msg-sender {
   font-size: 14px;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -691,7 +695,7 @@ onMounted(() => loadAccounts())
 
 .msg-subject {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -705,17 +709,17 @@ onMounted(() => loadAccounts())
 }
 
 .attachment-icon {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .msg-time {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .detail-header {
   padding: 16px;
-  background: #fafafa;
+  background: var(--el-fill-color-lighter);
   border-radius: 8px;
 }
 

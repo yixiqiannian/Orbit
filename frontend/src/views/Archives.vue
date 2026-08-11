@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { Folder } from '@element-plus/icons-vue'
 import { taskApi, type Task } from '../api/tasks'
 import { taskCategoryApi, type TaskCategory } from '../api/taskCategory'
 import { projectApi, type Project } from '../api/project'
@@ -75,7 +76,7 @@ function getStatusType(status: string) {
     in_progress: 'warning',
     cancelled: 'info'
   }
-  return map[status] || ''
+  return map[status] || undefined
 }
 
 function getStatusLabel(status: string) {
@@ -94,7 +95,7 @@ function getPriorityType(priority: string) {
     medium: 'warning',
     low: 'info'
   }
-  return map[priority] || ''
+  return map[priority] || undefined
 }
 
 function getPriorityLabel(priority: string) {
@@ -119,7 +120,7 @@ onMounted(() => {
 
 <template>
   <div class="archives-page">
-    <h1>📁 任务归档</h1>
+    <h1>任务归档</h1>
 
     <!-- 搜索筛选 -->
     <el-form :inline="true" style="margin: 20px 0;">
@@ -149,7 +150,7 @@ onMounted(() => {
         class="folder-card"
         @click="openFolder(folder)"
       >
-        <div class="folder-icon">📁</div>
+        <el-icon class="folder-icon"><Folder /></el-icon>
         <div class="folder-name">{{ folder.month }}</div>
         <div class="folder-stats">
           {{ folder.completed }}/{{ folder.total }} 完成
@@ -166,7 +167,7 @@ onMounted(() => {
     <!-- 文件夹详情弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="`📁 ${selectedFolder?.month} 归档任务`"
+      :title="`${selectedFolder?.month} 归档任务`"
       width="900px"
       destroy-on-close
     >
@@ -206,7 +207,7 @@ onMounted(() => {
 .archives-page h1 {
   margin: 0 0 10px;
   font-size: 24px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .folder-grid {
@@ -217,36 +218,41 @@ onMounted(() => {
 }
 
 .folder-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--surface);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
   padding: 24px 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-glass);
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
-  border: 1px solid #ebeef5;
 }
 
 .folder-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-color: #409eff;
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--el-color-primary);
 }
 
 .folder-icon {
   font-size: 48px;
+  color: var(--el-color-primary);
   margin-bottom: 12px;
+  display: inline-block;
 }
 
 .folder-name {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 8px;
 }
 
 .folder-stats {
   font-size: 14px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 </style>

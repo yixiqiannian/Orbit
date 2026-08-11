@@ -1,6 +1,6 @@
 <template>
   <div class="projects-page">
-    <h2>📁 项目管理</h2>
+    <h2>项目管理</h2>
     <ProjectManager />
   </div>
 </template>
@@ -15,6 +15,6 @@ import ProjectManager from '../components/ProjectManager.vue'
 }
 .projects-page h2 {
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 </style>

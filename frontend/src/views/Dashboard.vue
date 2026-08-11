@@ -1,12 +1,17 @@
 <template>
   <div class="dashboard" v-loading="loading">
-    <h2>📊 仪表盘</h2>
+    <h2>仪表盘</h2>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stat-cards">
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>📋 任务</template>
+    <el-row :gutter="20">
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 0ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Tickets /></el-icon>
+              <span>任务</span>
+            </div>
+          </template>
           <div class="stat-value">{{ stats.tasks?.total || 0 }}</div>
           <div class="stat-label">
             待办 {{ stats.tasks?.pending || 0 }} |
@@ -14,18 +19,28 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>⏰ 定时任务</template>
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 50ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Clock /></el-icon>
+              <span>定时任务</span>
+            </div>
+          </template>
           <div class="stat-value">{{ stats.cron?.total_jobs || 0 }}</div>
           <div class="stat-label">
             成功率 {{ stats.cron?.success_rate || 0 }}%
           </div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>📚 阅读</template>
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 100ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Reading /></el-icon>
+              <span>阅读</span>
+            </div>
+          </template>
           <div class="stat-value">{{ stats.reading?.total_books || 0 }}</div>
           <div class="stat-label">
             在读 {{ stats.reading?.reading || 0 }} |
@@ -33,27 +48,42 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>🧭 导航</template>
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 150ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Compass /></el-icon>
+              <span>导航</span>
+            </div>
+          </template>
           <div class="stat-value">{{ navStats.total_sites || 0 }}</div>
           <div class="stat-label">
             {{ navStats.total_categories || 0 }} 个分类
           </div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>📦 上月归档</template>
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 200ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Box /></el-icon>
+              <span>上月归档</span>
+            </div>
+          </template>
           <div class="stat-value">{{ stats.archive?.last_month_archived || 0 }}</div>
           <div class="stat-label">
             总归档 {{ stats.archive?.total_archived || 0 }}
           </div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card shadow="hover">
-          <template #header>✅ 本月已完成</template>
+      <el-col :span="4" class="fade-in-up" style="animation-delay: 250ms">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><CircleCheckFilled /></el-icon>
+              <span>本月已完成</span>
+            </div>
+          </template>
           <div class="stat-value">{{ stats.archive?.this_month_completed || 0 }}</div>
           <div class="stat-label">
             待归档
@@ -63,10 +93,15 @@
     </el-row>
 
     <!-- 即将过期 + 项目进度 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="12">
+    <el-row :gutter="20">
+      <el-col :span="12" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
-          <template #header>⏰ 即将过期任务</template>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><AlarmClock /></el-icon>
+              <span>即将过期任务</span>
+            </div>
+          </template>
           <div v-if="upcomingTasks.length" class="upcoming-tasks-list">
             <div
               v-for="task in upcomingTasks"
@@ -88,9 +123,14 @@
           <el-empty v-else description="暂无即将过期任务" :image-size="60" />
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="12" class="fade-in-up" style="animation-delay: 60ms">
         <el-card>
-          <template #header>📁 项目进度</template>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Folder /></el-icon>
+              <span>项目进度</span>
+            </div>
+          </template>
           <div v-if="projectList.length" class="project-progress-list">
             <div v-for="p in projectList" :key="p.id" class="project-progress-item">
               <div class="project-progress-header">
@@ -110,12 +150,15 @@
     </el-row>
 
     <!-- 每日一记 + 知识统计 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="16">
+    <el-row :gutter="20">
+      <el-col :span="16" class="fade-in-up" style="animation-delay: 0ms">
         <el-card class="daily-card">
           <template #header>
             <div class="card-header-with-action">
-              <span>🧠 每日一记</span>
+              <div class="card-header">
+                <el-icon class="card-header-icon"><Memo /></el-icon>
+                <span>每日一记</span>
+              </div>
               <el-button text size="small" @click="loadRandomCard">
                 <el-icon><Refresh /></el-icon>换一张
               </el-button>
@@ -138,9 +181,14 @@
           </el-empty>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="8" class="fade-in-up" style="animation-delay: 60ms">
         <el-card>
-          <template #header>📊 知识统计</template>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><DataAnalysis /></el-icon>
+              <span>知识统计</span>
+            </div>
+          </template>
           <div v-if="knowledgeStats" class="knowledge-stats">
             <div class="stat-item">
               <div class="stat-value">{{ knowledgeStats.total_cards || 0 }}</div>
@@ -157,10 +205,15 @@
     </el-row>
 
     <!-- 热力图 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
+    <el-row :gutter="20">
+      <el-col :span="24" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
-          <template #header>📅 任务完成热力图</template>
+          <template #header>
+            <div class="card-header">
+              <el-icon class="card-header-icon"><Calendar /></el-icon>
+              <span>任务完成热力图</span>
+            </div>
+          </template>
           <TaskHeatmap
             :data="heatmapData?.data"
             :start-date="heatmapData?.start_date"
@@ -171,9 +224,9 @@
     </el-row>
 
     <!-- 图表区域 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
+    <el-row :gutter="20">
       <!-- 任务状态饼图 -->
-      <el-col :span="8">
+      <el-col :span="8" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
           <template #header>任务状态分布</template>
           <div ref="taskChartRef" style="height: 300px;"></div>
@@ -181,7 +234,7 @@
       </el-col>
 
       <!-- 阅读进度环形图 -->
-      <el-col :span="8">
+      <el-col :span="8" class="fade-in-up" style="animation-delay: 60ms">
         <el-card>
           <template #header>阅读进度</template>
           <div ref="readingChartRef" style="height: 300px;"></div>
@@ -189,7 +242,7 @@
       </el-col>
 
       <!-- 定时任务执行状态 -->
-      <el-col :span="8">
+      <el-col :span="8" class="fade-in-up" style="animation-delay: 120ms">
         <el-card>
           <template #header>定时任务执行状态</template>
           <div ref="cronChartRef" style="height: 300px;"></div>
@@ -198,8 +251,8 @@
     </el-row>
 
     <!-- 阅读书籍进度 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
+    <el-row :gutter="20">
+      <el-col :span="24" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
           <template #header>在读书籍进度</template>
           <div class="book-progress-list">
@@ -222,8 +275,8 @@
     </el-row>
 
     <!-- 最近任务 + 最近执行记录 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="12">
+    <el-row :gutter="20">
+      <el-col :span="12" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
           <template #header>最近任务</template>
           <el-table :data="stats.recent_tasks" stripe>
@@ -236,7 +289,7 @@
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="12" class="fade-in-up" style="animation-delay: 60ms">
         <el-card>
           <template #header>邮箱未读</template>
           <el-table :data="stats.email_unread" stripe>
@@ -253,12 +306,15 @@
     </el-row>
 
     <!-- 最近学习日志 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
+    <el-row :gutter="20">
+      <el-col :span="24" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
           <template #header>
             <div class="card-header-with-action">
-              <span>📝 最近学习日志</span>
+              <div class="card-header">
+                <el-icon class="card-header-icon"><EditPen /></el-icon>
+                <span>最近学习日志</span>
+              </div>
               <el-button text size="small" @click="router.push('/tasks')">查看全部</el-button>
             </div>
           </template>
@@ -287,12 +343,15 @@
     </el-row>
 
     <!-- 最近日志 -->
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
+    <el-row :gutter="20">
+      <el-col :span="24" class="fade-in-up" style="animation-delay: 0ms">
         <el-card>
           <template #header>
             <div class="card-header-with-action">
-              <span>📓 最近日志</span>
+              <div class="card-header">
+                <el-icon class="card-header-icon"><Notebook /></el-icon>
+                <span>最近日志</span>
+              </div>
               <el-button text size="small" @click="router.push('/daily-logs')">查看全部</el-button>
             </div>
           </template>
@@ -305,7 +364,9 @@
             >
               <div class="recent-daily-log-header">
                 <span class="recent-daily-log-date">{{ formatDailyDate(log.date) }}</span>
-                <span class="recent-daily-log-mood">{{ getDailyMoodEmoji(log.mood) }}</span>
+                <el-icon class="recent-daily-log-mood" :class="'mood-' + (log.mood || 'normal')">
+                  <component :is="getDailyMoodIcon(log.mood)" />
+                </el-icon>
                 <span class="recent-daily-log-title">{{ log.title }}</span>
               </div>
             </div>
@@ -320,14 +381,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useThemeStore } from '../stores/theme'
 import { dashboardApi, type HeatmapData } from '../api/dashboard'
 import { navApi, type NavStats } from '../api/nav'
 import { knowledgeApi, type KnowledgeCard } from '../api/knowledge'
 import { dailyLogApi, type DailyLog } from '../api/dailyLog'
 import { projectApi, type Project } from '../api/project'
-import { Refresh, Calendar } from '@element-plus/icons-vue'
+import {
+  Refresh,
+  Calendar,
+  Tickets,
+  Clock,
+  Reading,
+  Compass,
+  Box,
+  CircleCheckFilled,
+  AlarmClock,
+  Folder,
+  Memo,
+  DataAnalysis,
+  EditPen,
+  Notebook,
+  Sunny,
+  PartlyCloudy,
+  Cloudy
+} from '@element-plus/icons-vue'
 import TaskHeatmap from '../components/TaskHeatmap.vue'
 import * as echarts from 'echarts'
 import MarkdownIt from 'markdown-it'
@@ -339,10 +419,13 @@ function renderMarkdown(text: string) {
 }
 
 const router = useRouter()
+const themeStore = useThemeStore()
 const loading = ref(false)
 const taskChartRef = ref<HTMLElement>()
 const readingChartRef = ref<HTMLElement>()
 const cronChartRef = ref<HTMLElement>()
+
+const chartInstances: echarts.ECharts[] = []
 
 const stats = reactive<any>({
   tasks: {},
@@ -406,6 +489,17 @@ onMounted(async () => {
   }
 })
 
+// 主题切换时重绘图表（深浅色适配）
+watch(
+  () => themeStore.theme,
+  () => nextTick(initCharts)
+)
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  disposeCharts()
+})
+
 async function loadRandomCard() {
   try {
     randomCard.value = await knowledgeApi.randomCard()
@@ -418,27 +512,60 @@ function goToKnowledge() {
   router.push('/knowledge')
 }
 
+function disposeCharts() {
+  chartInstances.forEach((c) => c.dispose())
+  chartInstances.length = 0
+}
+
+function handleResize() {
+  chartInstances.forEach((c) => c.resize())
+}
+
 function initCharts() {
+  disposeCharts()
   initTaskChart()
   initReadingChart()
   initCronChart()
 }
 
+/** ECharts 深浅色适配调色板（跟随 data-theme） */
+function chartPalette() {
+  const dark = document.documentElement.dataset.theme === 'dark'
+  return {
+    dark,
+    text: dark ? '#f1f5f9' : '#0f172a',
+    subText: dark ? '#94a3b8' : '#64748b',
+    axisLine: dark ? 'rgba(241,245,249,0.22)' : 'rgba(15,23,42,0.2)',
+    splitLine: dark ? 'rgba(241,245,249,0.08)' : 'rgba(15,23,42,0.06)',
+    borderColor: dark ? '#111827' : '#ffffff',
+    tooltipBg: dark ? 'rgba(30,41,59,0.92)' : 'rgba(255,255,255,0.95)',
+    tooltipBorder: dark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)',
+    tooltipText: dark ? '#f1f5f9' : '#0f172a'
+  }
+}
+
 function initTaskChart() {
   if (!taskChartRef.value) return
+  const c = chartPalette()
   const chart = echarts.init(taskChartRef.value)
+  chartInstances.push(chart)
   const option = {
-    tooltip: { trigger: 'item' },
-    legend: { bottom: '5%', left: 'center' },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText }
+    },
+    legend: { bottom: '5%', left: 'center', textStyle: { color: c.text } },
     series: [{
       name: '任务状态',
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { borderRadius: 10, borderColor: c.borderColor, borderWidth: 2 },
       label: { show: false, position: 'center' },
       emphasis: {
-        label: { show: true, fontSize: 20, fontWeight: 'bold' }
+        label: { show: true, fontSize: 20, fontWeight: 'bold', color: c.text }
       },
       labelLine: { show: false },
       data: [
@@ -450,22 +577,28 @@ function initTaskChart() {
     }]
   }
   chart.setOption(option)
-  window.addEventListener('resize', () => chart.resize())
 }
 
 function initReadingChart() {
   if (!readingChartRef.value) return
+  const c = chartPalette()
   const chart = echarts.init(readingChartRef.value)
+  chartInstances.push(chart)
   const option = {
-    tooltip: { trigger: 'item' },
-    legend: { bottom: '5%', left: 'center' },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText }
+    },
+    legend: { bottom: '5%', left: 'center', textStyle: { color: c.text } },
     series: [{
       name: '阅读状态',
       type: 'pie',
       radius: ['50%', '70%'],
       avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-      label: { show: true, position: 'outside', formatter: '{b}: {c}本' },
+      itemStyle: { borderRadius: 10, borderColor: c.borderColor, borderWidth: 2 },
+      label: { show: true, position: 'outside', formatter: '{b}: {c}本', color: c.text },
       data: [
         { value: stats.reading?.want_to_read || 0, name: '想读', itemStyle: { color: '#409EFF' } },
         { value: stats.reading?.reading || 0, name: '在读', itemStyle: { color: '#E6A23C' } },
@@ -474,21 +607,38 @@ function initReadingChart() {
     }]
   }
   chart.setOption(option)
-  window.addEventListener('resize', () => chart.resize())
 }
 
 function initCronChart() {
   if (!cronChartRef.value) return
+  const c = chartPalette()
   const chart = echarts.init(cronChartRef.value)
+  chartInstances.push(chart)
   const option = {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.tooltipBorder,
+      textStyle: { color: c.tooltipText }
+    },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', data: ['成功', '失败', '运行中'] },
-    yAxis: { type: 'value' },
+    xAxis: {
+      type: 'category',
+      data: ['成功', '失败', '运行中'],
+      axisLabel: { color: c.text },
+      axisLine: { lineStyle: { color: c.axisLine } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: c.subText },
+      splitLine: { lineStyle: { color: c.splitLine } }
+    },
     series: [{
       name: '执行次数',
       type: 'bar',
       barWidth: '60%',
+      itemStyle: { borderRadius: [8, 8, 0, 0] },
       data: [
         { value: stats.cron?.success_count || 0, itemStyle: { color: '#67C23A' } },
         { value: stats.cron?.failed_count || 0, itemStyle: { color: '#F56C6C' } },
@@ -497,7 +647,6 @@ function initCronChart() {
     }]
   }
   chart.setOption(option)
-  window.addEventListener('resize', () => chart.resize())
 }
 
 function getStatusType(status: string) {
@@ -551,9 +700,9 @@ function formatDailyDate(dateStr: string) {
   return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
 }
 
-function getDailyMoodEmoji(mood: string) {
-  const map: Record<string, string> = { good: '😊', normal: '😐', bad: '😢' }
-  return map[mood] || '😐'
+function getDailyMoodIcon(mood: string) {
+  const map: Record<string, any> = { good: Sunny, normal: PartlyCloudy, bad: Cloudy }
+  return map[mood] || PartlyCloudy
 }
 </script>
 
@@ -563,18 +712,84 @@ function getDailyMoodEmoji(mood: string) {
 }
 .dashboard h2 {
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--color-foreground);
+  font-family: var(--font-heading);
+  font-weight: 600;
 }
-.stat-cards {
-  margin-bottom: 20px;
+
+/* ================= 玻璃卡片统一范式（MASTER.md .glass-card） ================= */
+.dashboard .el-row + .el-row {
+  margin-top: 20px;
 }
+.dashboard .el-card {
+  --el-card-bg-color: var(--surface);
+  --el-card-border-color: var(--glass-border);
+  background: var(--surface);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+/* hover：蓝色光晕 + 上浮 2px（MASTER.md 动画范式） */
+.dashboard .el-card:hover {
+  transform: translateY(-2px);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-glow);
+  border-color: rgba(37, 99, 235, 0.45);
+}
+.dashboard .el-card :deep(.el-card__header) {
+  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 20px;
+}
+.dashboard .el-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
+/* 表格在玻璃卡片上透明化 */
+.dashboard .el-card :deep(.el-table) {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-border-color: var(--glass-border);
+  --el-table-row-hover-bg-color: var(--glass-hover);
+  --el-table-striped-row-bg-color: var(--glass-hover);
+}
+
+/* ================= 卡片 stagger 入场（fadeInUp 0.4s，逐个延迟） ================= */
+.fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-header-icon {
+  font-size: 16px;
+  color: var(--color-primary);
+}
+/* 统计数值：Fredoka 大号数字 + 双蓝渐变文字 */
 .stat-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #409eff;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--gradient-brand-blue);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 .stat-label {
-  color: #909399;
+  color: var(--color-text-muted);
   font-size: 14px;
   margin-top: 8px;
 }
@@ -593,7 +808,7 @@ function getDailyMoodEmoji(mood: string) {
 .daily-card-title {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-foreground);
   margin-bottom: 10px;
 }
 .daily-card-meta {
@@ -609,7 +824,7 @@ function getDailyMoodEmoji(mood: string) {
   flex-wrap: wrap;
 }
 .daily-card-preview {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -618,7 +833,7 @@ function getDailyMoodEmoji(mood: string) {
   margin: 12px 0 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-foreground);
 }
 .markdown-body h1 { font-size: 18px; }
 .markdown-body h2 { font-size: 16px; }
@@ -626,7 +841,7 @@ function getDailyMoodEmoji(mood: string) {
   margin: 8px 0;
 }
 .markdown-body code {
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
@@ -653,16 +868,16 @@ function getDailyMoodEmoji(mood: string) {
   margin: 4px 0;
 }
 .markdown-body blockquote {
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--color-primary);
   padding-left: 12px;
   margin: 8px 0;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 .markdown-body strong {
-  color: #303133;
+  color: var(--color-foreground);
 }
 .markdown-body a {
-  color: #409eff;
+  color: var(--color-primary);
   text-decoration: none;
 }
 .knowledge-stats {
@@ -690,11 +905,11 @@ function getDailyMoodEmoji(mood: string) {
 }
 .book-title {
   font-weight: 500;
-  color: #303133;
+  color: var(--color-foreground);
 }
 .book-author {
   font-size: 12px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 .book-progress-item .el-progress {
   flex: 1;
@@ -706,13 +921,16 @@ function getDailyMoodEmoji(mood: string) {
 }
 .recent-log-item {
   padding: 12px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-sm);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .recent-log-item:hover {
-  background: #ecf5ff;
+  background: var(--glass-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
 }
 .recent-log-header {
   display: flex;
@@ -722,17 +940,17 @@ function getDailyMoodEmoji(mood: string) {
 }
 .recent-log-task {
   font-weight: 500;
-  color: #303133;
+  color: var(--color-foreground);
   font-size: 14px;
 }
 .recent-log-time {
   margin-left: auto;
   font-size: 12px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 .recent-log-preview {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -750,13 +968,20 @@ function getDailyMoodEmoji(mood: string) {
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background: #fdf6ec;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-sm);
   border-left: 3px solid #e6a23c;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.upcoming-task-item:hover {
+  background: var(--glass-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
 }
 .upcoming-task-item.is-overdue {
-  background: #fef0f0;
-  border-left-color: #f56c6c;
+  background: rgba(251, 44, 54, 0.08);
+  border-left-color: var(--color-destructive);
 }
 .upcoming-task-info {
   display: flex;
@@ -765,7 +990,7 @@ function getDailyMoodEmoji(mood: string) {
 }
 .upcoming-task-title {
   font-size: 14px;
-  color: #303133;
+  color: var(--color-foreground);
   font-weight: 500;
 }
 .upcoming-task-due {
@@ -773,7 +998,7 @@ function getDailyMoodEmoji(mood: string) {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 .project-progress-list {
   display: flex;
@@ -793,11 +1018,11 @@ function getDailyMoodEmoji(mood: string) {
 .project-progress-name {
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--color-foreground);
 }
 .project-progress-count {
   font-size: 13px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 .recent-daily-logs-list {
   display: flex;
@@ -808,13 +1033,16 @@ function getDailyMoodEmoji(mood: string) {
   display: flex;
   align-items: center;
   padding: 10px 12px;
-  background: #f5f7fa;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-sm);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .recent-daily-log-item:hover {
-  background: #ecf5ff;
+  background: var(--glass-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
 }
 .recent-daily-log-header {
   display: flex;
@@ -824,19 +1052,44 @@ function getDailyMoodEmoji(mood: string) {
 }
 .recent-daily-log-date {
   font-size: 13px;
-  color: #909399;
+  color: var(--color-text-muted);
   min-width: 80px;
 }
 .recent-daily-log-mood {
   font-size: 16px;
 }
+.recent-daily-log-mood.mood-good {
+  color: #67c23a;
+}
+.recent-daily-log-mood.mood-normal {
+  color: var(--color-text-muted);
+}
+.recent-daily-log-mood.mood-bad {
+  color: #f56c6c;
+}
 .recent-daily-log-title {
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--color-foreground);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+</style>
+
+<!-- 深色模式微调：scoped :global() 复合选择器编译异常，改走非 scoped 块 -->
+<style>
+html[data-theme='dark'] .stat-value {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+html[data-theme='dark'] .recent-log-item,
+html[data-theme='dark'] .upcoming-task-item,
+html[data-theme='dark'] .recent-daily-log-item {
+  background: rgba(30, 41, 59, 0.6);
 }
 </style>

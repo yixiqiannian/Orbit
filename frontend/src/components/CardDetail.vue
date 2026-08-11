@@ -70,7 +70,7 @@ function formatDate(dateStr?: string) {
 }
 .card-detail-content {
   line-height: 1.7;
-  color: #303133;
+  color: var(--el-text-color-primary);
   min-height: 100px;
 }
 .card-detail-content :deep(h1),
@@ -84,11 +84,11 @@ function formatDate(dateStr?: string) {
   margin-bottom: 12px;
 }
 .card-detail-content :deep(code) {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  color: #e6a23c;
+  color: var(--el-color-warning);
 }
 .card-detail-content :deep(pre) {
   background-color: #1e1e1e;
@@ -109,11 +109,11 @@ function formatDate(dateStr?: string) {
   margin-bottom: 12px;
 }
 .card-detail-content :deep(blockquote) {
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--el-color-primary);
   padding-left: 12px;
   margin: 12px 0;
-  color: #606266;
-  background-color: #f5f7fa;
+  color: var(--el-text-color-regular);
+  background-color: var(--el-fill-color-light);
   padding: 12px;
   border-radius: 0 8px 8px 0;
 }
@@ -124,16 +124,16 @@ function formatDate(dateStr?: string) {
 }
 .card-detail-content :deep(th),
 .card-detail-content :deep(td) {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-lighter);
   padding: 8px 12px;
   text-align: left;
 }
 .card-detail-content :deep(th) {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   font-weight: 600;
 }
 .card-detail-content :deep(a) {
-  color: #409eff;
+  color: var(--el-color-primary);
   text-decoration: none;
 }
 .card-detail-content :deep(a:hover) {
@@ -142,8 +142,8 @@ function formatDate(dateStr?: string) {
 .card-detail-footer {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
-  color: #909399;
+  border-top: 1px solid var(--el-border-color-lighter);
+  color: var(--el-text-color-secondary);
   font-size: 12px;
   display: flex;
   gap: 16px;

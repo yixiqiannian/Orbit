@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useThemeStore } from '../stores/theme'
 
 interface DayData {
   date: string
@@ -92,22 +93,28 @@ const tooltip = ref({
   count: 0
 })
 
-const colorScale = [
-  '#ebedf0', // 0
-  '#9be9a8', // 1-2
-  '#40c463', // 3-4
-  '#30a14e', // 5-6
-  '#216e39'  // 7+
-]
+const themeStore = useThemeStore()
 
-const legendColors = colorScale
+// 深浅色适配：空值底色跟随主题（深色用 slate-800），任务格绿色阶保持一致
+function isDark(): boolean {
+  return themeStore.theme === 'dark' || document.documentElement.dataset.theme === 'dark'
+}
+
+function getColorScale(): string[] {
+  return isDark()
+    ? ['#1e293b', '#0e4429', '#006d32', '#26a641', '#39d353']
+    : ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39']
+}
+
+const legendColors = computed(() => getColorScale())
 
 function getColor(count: number): string {
-  if (count <= 0) return colorScale[0]
-  if (count <= 2) return colorScale[1]
-  if (count <= 4) return colorScale[2]
-  if (count <= 6) return colorScale[3]
-  return colorScale[4]
+  const scale = getColorScale()
+  if (count <= 0) return scale[0]
+  if (count <= 2) return scale[1]
+  if (count <= 4) return scale[2]
+  if (count <= 6) return scale[3]
+  return scale[4]
 }
 
 // 计算日期范围
@@ -231,7 +238,7 @@ function hideTooltip() {
   height: 12px;
   line-height: 12px;
   font-size: 11px;
-  color: #909399;
+  color: var(--color-text-muted);
   text-align: right;
 }
 
@@ -248,7 +255,7 @@ function hideTooltip() {
 .month-label {
   position: absolute;
   font-size: 11px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 
 .heatmap-grid {
@@ -269,11 +276,11 @@ function hideTooltip() {
   border-radius: 2px;
   cursor: pointer;
   transition: outline 0.1s;
-  outline: 1px solid rgba(0, 0, 0, 0.06);
+  outline: 1px solid var(--glass-border);
 }
 
 .heatmap-cell:hover {
-  outline: 2px solid #606266;
+  outline: 2px solid var(--color-primary);
 }
 
 .heatmap-legend {
@@ -285,14 +292,14 @@ function hideTooltip() {
 
 .legend-label {
   font-size: 11px;
-  color: #909399;
+  color: var(--color-text-muted);
 }
 
 .legend-cell {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  outline: 1px solid rgba(0, 0, 0, 0.06);
+  outline: 1px solid var(--glass-border);
 }
 
 .heatmap-tooltip {

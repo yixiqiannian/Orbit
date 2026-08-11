@@ -3,7 +3,7 @@
     <!-- 顶部搜索栏 -->
     <div class="portal-header">
       <div class="header-content">
-        <h1 class="portal-title">🧭 导航站</h1>
+        <h1 class="portal-title">导航站</h1>
         <div class="search-box">
           <el-input
             v-model="searchQuery"
@@ -131,13 +131,13 @@ function openSite(site: NavSite) {
 <style scoped>
 .nav-portal {
   min-height: 100vh;
-  background-color: #1a1a2e;
-  color: #eee;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0f172a;
+  color: #e9eef6;
+  font-family: var(--font-sans);
 }
 
 .portal-header {
-  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   padding: 40px 20px 30px;
   text-align: center;
 }
@@ -151,7 +151,7 @@ function openSite(site: NavSite) {
   margin: 0 0 20px;
   font-size: 32px;
   font-weight: 700;
-  background: linear-gradient(90deg, #e94560, #533483);
+  background: linear-gradient(90deg, #f59e0b, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -215,8 +215,8 @@ function openSite(site: NavSite) {
 }
 
 .tab-item.active {
-  color: #e94560;
-  border-bottom-color: #e94560;
+  color: #f59e0b;
+  border-bottom-color: #f59e0b;
 }
 
 .sites-grid {
@@ -249,14 +249,14 @@ function openSite(site: NavSite) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(83, 52, 131, 0.1));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(245, 158, 11, 0.08));
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .site-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(233, 69, 96, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
@@ -285,7 +285,7 @@ function openSite(site: NavSite) {
   width: 100%;
   height: 100%;
   border-radius: 10px;
-  background: linear-gradient(135deg, #e94560, #533483);
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
   display: flex;
   align-items: center;
   justify-content: center;
