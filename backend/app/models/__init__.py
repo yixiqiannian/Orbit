@@ -12,6 +12,7 @@ from app.models.task_log import TaskLog
 from app.models.project import Project
 from app.models.task_category import TaskCategory
 from app.models.daily_log import DailyLog
+from app.models.hotlist_item import HotlistItem
 __all__ = [
     "User", "Task", "TaskType", "TaskStatus", "TaskPriority",
     "CronExecution", "ExecutionStatus",
@@ -22,4 +23,5 @@ __all__ = [
     "TaskLog",
     "Project", "TaskCategory",
     "DailyLog",
+    "HotlistItem",
 ]
