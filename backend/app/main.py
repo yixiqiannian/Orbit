@@ -15,6 +15,7 @@ from app.api.task_logs import router as task_logs_router
 from app.api.projects import router as projects_router
 from app.api.task_categories import router as task_categories_router
 from app.api.daily_logs import router as daily_logs_router
+from app.api.hotlist import router as hotlist_router
 
 app = FastAPI(title="Orbit API", version="1.0.0")
 
@@ -50,6 +51,7 @@ app.include_router(task_logs_router)
 app.include_router(projects_router)
 app.include_router(task_categories_router)
 app.include_router(daily_logs_router)
+app.include_router(hotlist_router)
 
 
 @app.get("/health")
