@@ -13,7 +13,8 @@ import {
   Fold,
   Expand,
   Calendar,
-  Box
+  Box,
+  TrendCharts
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -26,6 +27,7 @@ const menuItems = [
   { path: '/projects', name: 'Projects', icon: Folder, title: '项目管理' },
   { path: '/cron', name: 'CronJobs', icon: Timer, title: '定时任务' },
   { path: '/reading', name: 'Reading', icon: Reading, title: '阅读规划' },
+  { path: '/hotlist', name: 'Hotlist', icon: TrendCharts, title: '热榜' },
   { path: '/email', name: 'Email', icon: Message, title: '邮箱' },
   { path: '/nav', name: 'NavManage', icon: Location, title: '导航管理' },
   { path: '/knowledge', name: 'Knowledge', icon: Notebook, title: '知识卡片' },

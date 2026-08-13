@@ -44,6 +44,11 @@ const routes = [
         component: () => import('../views/Reading.vue')
       },
       {
+        path: '/hotlist',
+        name: 'Hotlist',
+        component: () => import('../views/Hotlist.vue')
+      },
+      {
         path: '/email',
         name: 'Email',
         component: () => import('../views/Email.vue')
