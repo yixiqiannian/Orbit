@@ -51,6 +51,12 @@
 - 前台独立展示页（/portal）
 - 自动识别网站信息
 
+### 🔥 热榜
+- GitHub Trending 每日热榜抓取（数据源可扩展）
+- 日期选择，查看历史热榜
+- 排名徽章（金银铜）、Star/Fork 统计、语言标签
+- 手动抓取，幂等去重入库
+
 ### 🔐 用户认证
 - JWT 登录
 - 安全可靠
@@ -75,11 +81,11 @@
 Orbit/
 ├── backend/              # FastAPI 后端
 │   ├── app/
-│   │   ├── api/          # API 接口
+│   │   ├── api/          # API 接口（含 hotlist.py 热榜）
 │   │   ├── core/         # 配置、认证、数据库
-│   │   ├── models/       # 数据模型
+│   │   ├── models/       # 数据模型（含 hotlist_item.py）
 │   │   ├── schemas/      # 数据验证
-│   │   └── services/     # 业务逻辑
+│   │   └── services/     # 业务逻辑（含 github_trending.py 抓取）
 │   ├── scripts/          # 初始化脚本
 │   └── requirements.txt
 ├── frontend/             # Vue 3 前端
@@ -274,7 +280,71 @@ server {
 
 ---
 
+## 🔥 热榜模块说明
+
+### 数据源
+
+当前内置 **GitHub Trending**（每日），数据源注册表位于 `backend/app/api/hotlist.py` 的 `SOURCES` 常量。新增数据源只需：写一个抓取函数 + 在 `SOURCES` 注册，前端自动出现对应 tab。
+
+### 抓取方式
+
+两种方式：
+1. **页面手动抓取**：进入「热榜」页点击「立即抓取」（需登录）
+2. **API 定时抓取**（推荐，配合 Hermes Cron 每日自动执行）：
+   ```bash
+   curl -X POST "http://localhost:8000/api/hotlist/fetch/?source=github" \
+     -H "Authorization: Bearer <你的JWT>"
+   ```
+   抓取按 `source + hot_date + rank` 幂等去重，同一天重复抓取不会产生重复数据。
+
+### API 端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/hotlist/?source=github&hot_date=2026-08-13` | GET | 查询某日热榜（默认今天） |
+| `/api/hotlist/fetch/?source=github` | POST | 抓取最新热榜入库 |
+| `/api/hotlist/sources/` | GET | 列出可用数据源 |
+
+### Docker 部署注意（新表迁移）
+
+**FastAPI/SQLAlchemy 不会自动建表！** 热榜功能需要手动在 MySQL 创建 `hotlist_items` 表：
+
+```sql
+CREATE TABLE IF NOT EXISTS hotlist_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  source VARCHAR(50) NOT NULL DEFAULT 'github',
+  rank INT NOT NULL,
+  title VARCHAR(300) NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  description TEXT NULL,
+  language VARCHAR(50) NULL,
+  stars_today INT NULL,
+  stars_total INT NULL,
+  forks INT NULL,
+  hot_date DATE NOT NULL,
+  created_at DATETIME,
+  UNIQUE KEY uq_hotlist_source_date_rank (source, hot_date, rank)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+```bash
+# 进入 MySQL 容器执行
+docker exec -it orbit-mysql mysql -u root -p orbit -e "CREATE TABLE IF NOT EXISTS hotlist_items (...);"
+# 然后重启后端使模型生效
+docker restart orbit-backend
+```
+
+本地开发环境直接运行 `python scripts/init_db.py` 即可自动建表。
+
+---
+
 ## 📝 更新日志
+
+### v1.1.0 (2026-08-13)
+- 新增「热榜」模块：GitHub Trending 每日热榜
+- 后端：`hotlist_items` 表、抓取服务（httpx + BeautifulSoup）、`/api/hotlist/` API（查询/抓取/数据源）
+- 前端：`/hotlist` 页面（日期选择、手动抓取、排名徽章、深/浅色模式）
+- 数据源架构可扩展，后续可接入知乎/微博/V2EX 等
 
 ### v1.0.0 (2026-07-29)
 - 初始版本发布
