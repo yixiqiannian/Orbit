@@ -5,12 +5,14 @@ import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { SwitchButton, User, Sunny, Moon } from '@element-plus/icons-vue'
 import { computed } from 'vue'
+import { getDailyQuote } from '../data/quotes'
 
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 const router = useRouter()
 
 const isDark = computed(() => themeStore.theme === 'dark')
+const dailyQuote = computed(() => getDailyQuote())
 
 async function handleLogout() {
   try {
@@ -31,6 +33,12 @@ async function handleLogout() {
   <div class="header">
     <div class="header-left">
       <h3 class="page-title">Orbit 管理系统</h3>
+    </div>
+    <div class="header-center" :title="`${dailyQuote.text} —— ${dailyQuote.from}`">
+      <span class="quote-mark">「</span>
+      <span class="quote-text">{{ dailyQuote.text }}</span>
+      <span class="quote-from">—— {{ dailyQuote.from }}</span>
+      <span class="quote-mark">」</span>
     </div>
     <div class="header-right">
       <el-tooltip :content="isDark ? '切换到浅色模式' : '切换到深色模式'" placement="bottom">
@@ -70,6 +78,7 @@ async function handleLogout() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   width: 100%;
   height: 100%;
   padding: 0 20px;
@@ -90,6 +99,49 @@ async function handleLogout() {
   color: var(--color-foreground, #0f172a);
   white-space: nowrap;
   transition: color 0.25s ease;
+}
+
+/* 每日一言：绝对居中，不挤压左右两端的标题和操作区 */
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 55%;
+  font-size: 13px;
+  color: var(--color-foreground, #0f172a);
+  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.25s ease, opacity 0.25s ease;
+  cursor: default;
+}
+
+.header-center:hover {
+  opacity: 1;
+  color: var(--color-primary, #2563eb);
+}
+
+.quote-mark {
+  font-family: var(--font-display, 'Fredoka', 'Fira Sans', sans-serif);
+  color: var(--color-primary, #2563eb);
+  opacity: 0.8;
+}
+
+.quote-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-from {
+  color: var(--color-foreground, #0f172a);
+  opacity: 0.55;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .header-right {
