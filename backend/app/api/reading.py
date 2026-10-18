@@ -1,5 +1,7 @@
 """Reading (阅读规划) API endpoints."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -16,6 +18,7 @@ from app.schemas.reading import (
 )
 
 router = APIRouter(prefix="/api/reading", tags=["阅读规划"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/books", response_model=BookListResponse)
@@ -133,6 +136,7 @@ async def sync_weread(
         shelf_data = await client.get_shelf()
         books = shelf_data.get("books", [])
         synced = 0
+        progress_failed = []
 
         for item in books:
             weread_id = item.get("bookId")
@@ -141,18 +145,21 @@ async def sync_weread(
             cover = item.get("cover", "")
             finish = item.get("finishReading", 0)
 
-            # 获取阅读进度
+            # 获取阅读进度（失败时保留原有进度，避免把已有进度刷成 0）
             progress = 0
+            progress_ok = False
             last_read_at = None
             try:
                 progress_data = await client.get_book_progress(weread_id)
                 book_progress = progress_data.get("book", {})
                 progress = book_progress.get("progress", 0)
+                progress_ok = True
                 update_time = book_progress.get("updateTime")
                 if update_time:
                     last_read_at = datetime.fromtimestamp(update_time)
-            except Exception:
-                pass
+            except Exception as e:
+                progress_failed.append(title)
+                logger.warning("获取进度失败 %s: %s", title, e)
 
             # 检查是否已存在
             existing = db.query(Book).filter(
@@ -165,14 +172,16 @@ async def sync_weread(
                 existing.title = title
                 existing.author = author
                 existing.cover_url = cover
-                existing.progress = progress
+                if progress_ok:
+                    existing.progress = progress
                 if last_read_at:
                     existing.last_read_at = last_read_at
-                # 根据进度判断状态
-                if progress >= 100:
-                    existing.status = BookStatus.FINISHED
-                elif progress > 0:
-                    existing.status = BookStatus.READING
+                # 根据进度判断状态（进度获取失败时不动状态）
+                if progress_ok:
+                    if progress >= 100:
+                        existing.status = BookStatus.FINISHED
+                    elif progress > 0:
+                        existing.status = BookStatus.READING
             else:
                 # 新增
                 if finish or progress >= 100:
@@ -196,9 +205,14 @@ async def sync_weread(
             synced += 1
 
         db.commit()
-        return {"message": f"同步成功，共 {synced} 本书", "count": synced}
+        message = f"同步成功，共 {synced} 本书"
+        if progress_failed:
+            message += f"（{len(progress_failed)} 本进度获取失败，已保留原进度: {', '.join(progress_failed[:5])}）"
+        return {"message": message, "count": synced, "progress_failed": progress_failed}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"同步失败: {str(e)}")
+        logger.exception("微信读书同步失败")
+        detail = str(e) or f"{type(e).__name__}（无错误信息，常见于连接超时/被重置）"
+        raise HTTPException(status_code=500, detail=f"同步失败: {detail}")
 
 
 @router.get("/sync/{book_id}")

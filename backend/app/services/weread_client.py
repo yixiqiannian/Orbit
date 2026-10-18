@@ -1,5 +1,7 @@
 """WeRead (微信读书) API client."""
 
+import asyncio
+
 import httpx
 from typing import Optional
 from app.core.config import settings
@@ -8,6 +10,7 @@ from app.core.config import settings
 class WeReadClient:
     BASE_URL = "https://i.weread.qq.com/api/agent/gateway"
     SKILL_VERSION = "1.0.4"
+    MAX_RETRIES = 3
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -18,10 +21,24 @@ class WeReadClient:
 
     async def _request(self, api_name: str, **kwargs) -> dict:
         body = {"api_name": api_name, "skill_version": self.SKILL_VERSION, **kwargs}
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(self.BASE_URL, headers=self.headers, json=body, timeout=30)
-            resp.raise_for_status()
-            return resp.json()
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    resp = await client.post(self.BASE_URL, headers=self.headers, json=body)
+                    resp.raise_for_status()
+                    return resp.json()
+            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+                last_exc = exc
+                if attempt < self.MAX_RETRIES:
+                    await asyncio.sleep(1.5 * attempt)
+                    continue
+                raise RuntimeError(
+                    f"微信读书接口 {api_name} 请求失败（重试 {self.MAX_RETRIES} 次）: "
+                    f"{type(exc).__name__}: {exc or '连接超时/被重置'}"
+                ) from exc
+        raise RuntimeError(f"微信读书接口 {api_name} 请求失败: {last_exc}")
+
 
     async def get_shelf(self) -> dict:
         """获取书架数据."""
